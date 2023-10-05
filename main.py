@@ -5,7 +5,7 @@ grid_ratio = 1
 
 if __name__ == "__main__":
     myarray = IArray()
-    dir = os.getcwd() + "\\..\\data\\"
+    dir = os.getcwd() + "\\.\\data\\"
     layoutfilename = "\\UCIePitch25-37.csv"
     listfilename = "\\test.csv"
 
