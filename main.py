@@ -9,6 +9,8 @@ if __name__ == "__main__":
     layoutfilename = "\\UCIePitch25-37.csv"
     listfilename = "\\test.csv"
 
+    print("Hello Annie!")
+
     # Parse layout form to a list form
     parser = layoutParser()
     parser.read_csv(dir + layoutfilename)
