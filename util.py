@@ -5,24 +5,6 @@ import matplotlib.patches as patch
 import csv
 from matplotlib.lines import Line2D
 
-colorBoard2 = {-1: 'white',
-              0: 'black',
-              1: 'cornflowerblue',
-              2: 'orange',
-              3: 'cyan',
-              4: 'lawngreen',
-              5: 'blue',
-              6: 'navy',
-              7: 'purple',
-              8: 'maroon',
-              9: 'yellow',
-              10: 'olive',
-              11: 'lightseagreen',
-              12: 'aquamarine',
-              13: 'rebeccapurple',
-              14: 'crimson'
-              }
-
 colorBoard = {-1: 'white',
               0: 'black',
               1: 'royalblue',
@@ -286,12 +268,14 @@ class IArray:
             print("VSS-VSS shorts:", self.counting[0] / 2)
             print("VCC-VCC shorts:", self.counting[1] / 2)
             print("VSS-signal shorts:", self.counting[3] / 2)
-            print("VSS-signal shorts:", self.counting[6] / 2)
+            print("VDD-signal shorts:", self.counting[6] / 2)
             print("Signal-to-signal:", (self.counting[4]+self.counting[5]) / 2)
             print("----------------------------------")
             print("VCC opens:", PowerNum)
             print("VSS opens:", GroundNum)
             print("Signal opens:", SignalNum)
+            print("----------------------------------")
+            print("Weighted number:", ((self.counting[4]+self.counting[5])-(self.counting[0]+self.counting[1]))/2)
 
         elif event.key == '+' or event.key == '-':
             for item in self:
@@ -313,7 +297,7 @@ class IArray:
             self.fig.canvas.draw()
             self.fig.canvas.flush_events()
             self.ax.autoscale_view()
-            for i in range(6):
+            for i in range(7):
                 self.counting[i] = 0
                 self.bcounting[i] = 0
 
