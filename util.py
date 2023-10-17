@@ -72,6 +72,19 @@ class IArray:
             self.counting.append(0)
             self.bcounting.append(0)
 
+        # Error calculation parameters
+        self.SingleShortErrorSum = []
+        self.SingleShortErrorRate = []
+        for i in range(7):
+            self.SingleShortErrorSum.append(0)
+            self.SingleShortErrorRate.append(0)
+
+        self.SingleOpenErrorSum = []
+        self.SingleOpenErrorRate = []
+        for i in range(3):
+            self.SingleOpenErrorSum.append(0)
+            self.SingleOpenErrorRate.append(0)
+
     def __iter__(self):
         return self
 
@@ -268,7 +281,7 @@ class IArray:
             print("VSS-VSS shorts:", self.counting[0] / 2)
             print("VCC-VCC shorts:", self.counting[1] / 2)
             print("VSS-signal shorts:", self.counting[3] / 2)
-            print("VDD-signal shorts:", self.counting[6] / 2)
+            print("VCC-signal shorts:", self.counting[6] / 2)
             print("Signal-to-signal:", (self.counting[4]+self.counting[5]) / 2)
             print("----------------------------------")
             print("VCC opens:", PowerNum)
@@ -276,6 +289,25 @@ class IArray:
             print("Signal opens:", SignalNum)
             print("----------------------------------")
             print("Weighted number:", ((self.counting[4]+self.counting[5])-(self.counting[0]+self.counting[1]))/2)
+
+            self.SingleShortError()
+            print("---------------------------------")
+            print("The probability of error such that a single short is happened: ")
+            print("VSS-VCC single-short error rate:", self.SingleShortErrorRate[2])
+            print("VSS-VSS single-short error rate:", self.SingleShortErrorRate[0])
+            print("VCC-VCC single-short error rate:", self.SingleShortErrorRate[1])
+            print("VSS-signal single-short error rate:", self.SingleShortErrorRate[3])
+            print("VCC-signal single-short error rate:", self.SingleShortErrorRate[6])
+            print("Signal-to-signal single-short error rate:", (self.SingleShortErrorRate[4] + self.SingleShortErrorRate[5]))
+            print(" => Single-short error rate:", sum(self.SingleShortErrorRate))
+
+            self.SingleOpenError(GroundNum=GroundNum, PowerNum=PowerNum, SignalNum=SignalNum)
+            print("----------------------------------")
+            print("The probability of error such that a single short is happened: ")
+            print("VCC single-open error rate:", self.SingleOpenErrorRate[0])
+            print("VSS single-open error rate:", self.SingleOpenErrorRate[1])
+            print("Signal single-open error rate:", self.SingleOpenErrorRate[2])
+            print(" => Single-open error rate:", sum(self.SingleOpenErrorRate))
 
         elif event.key == '+' or event.key == '-':
             for item in self:
@@ -509,3 +541,40 @@ class IArray:
             if tr - 2 >= 0 and tc - 1 >= 0 and self.array[tr - 2][tc - 1] != None:
                 #print("Draw left-lower line:")
                 self.createLines((tr - 2, tc - 1), (tr, tc))
+
+    def SingleOpenError(self, GroundNum=0, PowerNum=0, SignalNum=0):
+
+        for open_type in range(3):
+            if open_type == -1:
+                pass
+            # power open
+            elif open_type == 0:
+                self.SingleOpenErrorSum[open_type] = 0
+                self.SingleOpenErrorRate[open_type] = float(
+                    self.SingleOpenErrorSum[open_type] / (PowerNum + GroundNum + SignalNum))
+            # ground open
+            elif open_type == 1:
+                self.SingleOpenErrorSum[open_type] = 0
+                self.SingleOpenErrorRate[open_type] = float(
+                    self.SingleOpenErrorSum[open_type] / (PowerNum + GroundNum + SignalNum))
+            # signal open
+            elif open_type == 2:
+                self.SingleOpenErrorSum[open_type] = SignalNum
+                self.SingleOpenErrorRate[open_type] = float(
+                    self.SingleOpenErrorSum[open_type] / (PowerNum + GroundNum + SignalNum))
+
+    def SingleShortError(self):
+        # short case
+        for short_type in range(7):
+            # no error
+            if short_type == -1:
+                self.SingleShortErrorSum[short_type] = 0
+            # Ground-to-ground
+            elif short_type == 0:
+                self.SingleShortErrorSum[short_type] = 0
+            # Power-to-power
+            elif short_type == 1:
+                self.SingleShortErrorSum[short_type] = 0
+            else:
+                self.SingleShortErrorSum[short_type] = self.counting[short_type] / 2
+                self.SingleShortErrorRate[short_type] = float(self.SingleShortErrorSum[short_type] / (sum(self.counting) / 2))
