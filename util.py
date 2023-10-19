@@ -104,6 +104,19 @@ class IArray:
             self.counting.append(0)
             self.bcounting.append(0)
 
+        # Error calculation parameters
+        self.SingleShortErrorSum = []
+        self.SingleShortErrorRate = []
+        for i in range(7):
+            self.SingleShortErrorSum.append(0)
+            self.SingleShortErrorRate.append(0)
+
+        self.SingleOpenErrorSum = []
+        self.SingleOpenErrorRate = []
+        for i in range(3):
+            self.SingleOpenErrorSum.append(0)
+            self.SingleOpenErrorRate.append(0)
+
     def __iter__(self):
         return self
 
