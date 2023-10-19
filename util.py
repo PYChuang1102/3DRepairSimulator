@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patch
 import csv
 from matplotlib.lines import Line2D
+from scipy.stats import weibull_min
 
 colorBoard = {-1: 'white',
               0: 'black',
@@ -21,13 +22,36 @@ colorBoard = {-1: 'white',
               12: 'aquamarine',
               13: 'rebeccapurple',
               14: 'crimson'
-              }
+}
 
 bumpType = {0: 'Vss',
             1: 'Vdd',
             2: 'Function',
             3: 'Spare'
-            }
+}
+
+# format: key: [groupIdx, color, lineLevels, lineWidth]
+shortType = {'None': [-1, 'white', 0, 0],
+             'vss-vss': [0, 'chartreuse', 2, 1],
+             'vdd-vdd': [1, 'chartreuse', 2, 1],
+             'vdd-vss': [2, 'red', 5, 2],
+             'vss-signal': [3, 'fuchsia', 0, 0],
+             'vdd-signal': [4, 'fuchsia', 0, 0],
+             'inter-bundle-signal-signal': [5, 'black', 0, 0],
+             'intra-bundle-signal-signal': [6, 'black', 0, 0],
+}
+
+class ExpoLogarithmic(object):
+    def __init__(self):
+        return self
+
+    # Define the PDF if the Exponential-Logarithmic distribution
+    def pdf(self, x, λ, α):
+        return (α * np.exp(-λ * x)) / (1 - np.exp(-λ))
+
+    # Define the CDF of the Exponential-Logarithmic distribution
+    def cdf(self, x, λ, α):
+        return 1 - np.exp(-λ * x) ** α
 
 class Bump(object):
     def __init__(self, name='', id=0, row=-1, col=-1, x=-1.0, y=-1.0, size=0., bundle=0, color=0, type=2):
@@ -44,10 +68,17 @@ class Bump(object):
 
         self.sizeScaler = 1.0
 
+class Line(object):
+    def __init__(self, point1=None, point2=None, linetype=None):
+        self.link = (point1, point2)
+        self.color = shortType[linetype][1] if shortType[linetype] else 'white'
+        self.level = shortType[linetype][2] if shortType[linetype] else 0
+        self.width = shortType[linetype][3] if shortType[linetype] else 0
+        self.type = linetype
 
-    def __getitem__(self, idx=0):
-        return self
-    #    return [self.row, self.col, self.x, self.y, self.size, self.bundle, self.color, self.type]
+    def sef_line(self, left=None, right=None):
+        self.link = (left, right)
+
 
 class IArray:
     def __init__(self):
@@ -58,11 +89,12 @@ class IArray:
         self.idx = 0
         self.bx = []
         self.by = []
-        self.array = None
+        self.marray = None
         self.adjacent = None
         self.ux = None
         self.uy = None
         self.anchorVector = None
+        self.larray = []
 
         # I-Array parameters
         self.ArraySize = None
@@ -81,7 +113,7 @@ class IArray:
             self.idx = 0
             raise StopIteration
         else:
-            return self.bump[self.idx-1].__getitem__()
+            return self.bump[self.idx-1]
 
     def __getitem__(self, idx=-1):
         if idx < 0 & idx > self.length:
@@ -146,12 +178,130 @@ class IArray:
         subM = strd(a, shape=s, strides=a.strides * 2)
         return np.einsum('ij,ijkl->kl', f, subM)
 
+    def createLine(self, bump1, bump2):
+        #Ground-to-gound
+        if bump1.type == 0 and bump2.type == 0:
+            line = Line(point1=bump1, point2=bump2, linetype='vss-vss')
+        #Power-to-power
+        elif bump1.type == 1 and bump2.type == 1:
+            line = Line(point1=bump1, point2=bump2, linetype='vdd-vdd')
+        #Power-to-ground
+        elif bump1.type < 2 and bump2.type < 2 and bump1.type != bump2.type:
+            line = Line(point1=bump1, point2=bump2, linetype='vdd-vss')
+        #Ground-to-signal
+        elif bump1.type == 0 or bump2.type == 0:
+            line = Line(point1=bump1, point2=bump2, linetype='vss-signal')
+        #Power-to-signal
+        elif bump1.type == 1 or bump2.type == 1:
+            line = Line(point1=bump1, point2=bump2, linetype='vdd-signal')
+        #Inter-bundle signal-to-signal
+        elif bump1.bundle != bump2.bundle:
+            line = Line(point1=bump1, point2=bump2, linetype='inter-bundle-signal-signal')
+        #Intra-bundle signal-to-signal
+        else:
+            line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-signal')
+        return line
+
+    def check_is_line(self, bump1, bump2):
+        return [item for i, item in enumerate(self.larray) if (item.link == (bump1, bump2) or item.link == (bump2, bump1))]
+
+    def search_Lines_by_Bump(self, bump):
+        return [item for i, item in enumerate(self.larray) if [j for j in item.link if (j == bump)]]
+
+    def createLinesByBump(self, bump):
+        if bump != None:
+            tr, tc = bump.row, bump.col
+            mr, mc = self.ArraySize
+            ax, ay = self.anchorVector
+            # Upper line
+            if tr + 1 < mr and self.marray[tr + 1][tc] != None:
+                if not self.check_is_line(bump, self.marray[tr + 1][tc]):
+                    self.larray.append(self.createLine(bump, self.marray[tr + 1][tc]))
+            # Bottom line
+            if tr - 1 >= 0 and self.marray[tr - 1][tc] != None:
+                if not self.check_is_line(bump, self.marray[tr - 1][tc]):
+                    self.larray.append(self.createLine(bump, self.marray[tr - 1][tc]))
+            # Left-most
+            if tc - 2 >= 0 and self.marray[tr][tc - 2] != None:
+                if not self.check_is_line(bump, self.marray[tr][tc - 2]):
+                    self.larray.append(self.createLine(bump, self.marray[tr][tc - 2]))
+            # Right-upper line
+            if tr + 1 < mr and tc + 1 < mc and self.marray[tr + 1][tc + 1] != None:
+                if not self.check_is_line(bump, self.marray[tr + 1][tc + 1]):
+                    self.larray.append(self.createLine(bump, self.marray[tr + 1][tc + 1]))
+            # Right-top line
+            if tr < mr and tc + 1 < mc and self.marray[tr][tc + 1] != None:
+                if not self.check_is_line(bump, self.marray[tr][tc + 1]):
+                    self.larray.append(self.createLine(bump, self.marray[tr][tc + 1]))
+            # Right-lower line
+            if tr - 1 >= 0 and tc + 1 < mc and self.marray[tr - 1][tc + 1] != None:
+                if not self.check_is_line(bump, self.marray[tr - 1][tc + 1]):
+                    self.larray.append(self.createLine(bump, self.marray[tr - 1][tc + 1]))
+            # Left-upper line
+            if tr + 1 < mr and tc - 1 >= 0 and self.marray[tr + 1][tc - 1] != None:
+                if not self.check_is_line(bump, self.marray[tr + 1][tc - 1]):
+                    self.larray.append(self.createLine(bump, self.marray[tr + 1][tc - 1]))
+            # left-top line
+            if tr < mr and tc - 1 >= 0 and self.marray[tr][tc - 1] != None:
+                if not self.check_is_line(bump, self.marray[tr][tc - 1]):
+                    self.larray.append(self.createLine(bump, self.marray[tr][tc - 1]))
+            # left-lower line
+            if tr - 1 >= 0 and tc - 1 >= 0 and self.marray[tr - 1][tc - 1] != None:
+                if not self.check_is_line(bump, self.marray[tr - 1][tc - 1]):
+                    self.larray.append(self.createLine(bump, self.marray[tr - 1][tc - 1]))
+
+            # Type 1:
+            #     *   *
+            #       *
+            #     $   *
+            #       $
+            # Type 2:
+            #       *
+            #     *   *
+            #       $
+            #     $   *
+            if ay < 0:
+                # Type 1
+                factor = 0
+            else:
+                # Type 2
+                factor = 1
+            if ((tc + factor) % 2) == 0:
+                # Right-top line
+                if tr + 2 < mr and tc + 1 < mc and self.marray[tr + 2][tc + 1] != None:
+                    if not self.check_is_line(bump, self.marray[tr + 2][tc + 1]):
+                        self.larray.append(self.createLine(bump, self.marray[tr + 2][tc + 1]))
+                # Left-upper line
+                if tr + 2 < mr and tc - 1 >= 0 and self.marray[tr + 2][tc - 1] != None:
+                    if not self.check_is_line(bump, self.marray[tr + 2][tc - 1]):
+                        self.larray.append(self.createLine(bump, self.marray[tr + 2][tc - 1]))
+            else:
+                # Right-bottom line
+                if tr - 2 >= 0 and tc + 1 < mc and self.marray[tr - 2][tc + 1] != None:
+                    if not self.check_is_line(bump, self.marray[tr - 2][tc + 1]):
+                        self.larray.append(self.createLine(bump, self.marray[tr - 2][tc + 1]))
+                # left-lower line
+                if tr - 2 >= 0 and tc - 1 >= 0 and self.marray[tr - 2][tc - 1] != None:
+                    if not self.check_is_line(bump, self.marray[tr - 2][tc - 1]):
+                        self.larray.append(self.createLine(bump, self.marray[tr - 2][tc - 1]))
+
+    def construct_lmap(self):
+        for bump in self:
+            self.createLinesByBump(bump)
+        print("Total number of lines: ", len(self.larray))
+
+    def drawing_all_lines(self):
+        # Drawing all lines:
+        for item in self.larray:
+            self.createDrawingLines(item)
+        print("Total number of lines: ", len(self.larray))
+
     def construct_imap(self):
         if self.bump:
             r = []
             c = []
             p = []
-            self.array = []
+            self.marray = []
             for item in self:
                 r.append(int(item.row))
                 c.append(int(item.col))
@@ -163,17 +313,17 @@ class IArray:
 
             for i in range(mr):
                 tmp = []
-                self.array.append(tmp)
+                self.marray.append(tmp)
                 for j in range(mc):
                     indices = [index for index, item in enumerate(p) if item == (i, j)]
                     if len(indices) == 0:
-                        self.array[i].append(None)
+                        self.marray[i].append(None)
                     else:
-                        self.array[i].append(self.bump[indices[0]])
-            self.ux = abs(self.array[0][1].x-self.array[0][0].x)
-            self.uy = abs(self.array[1][0].y-self.array[0][0].y)
-            self.anchorVector = ((self.array[0][1].x-self.array[0][0].x), (self.array[0][1].y-self.array[0][0].y))
-            return self.array
+                        self.marray[i].append(self.bump[indices[0]])
+            self.ux = abs(self.marray[0][1].x-self.marray[0][0].x)
+            self.uy = abs(self.marray[1][0].y-self.marray[0][0].y)
+            self.anchorVector = ((self.marray[0][1].x-self.marray[0][0].x), (self.marray[0][1].y-self.marray[0][0].y))
+            return self.marray
         else:
             raise Exception('No interconnect to construct the array!!')
 
@@ -201,7 +351,7 @@ class IArray:
 
     def create_fig(self, xlim=12, ylim=12):
         self.fig, self.ax = plt.subplots()
-        cid = self.fig.canvas.mpl_connect('button_press_event', self.rightclick)
+        cid = self.fig.canvas.mpl_connect('button_press_event', self.mouseclicks)
         self.fig.canvas.mpl_connect('key_press_event', self.on_press)
         #self.ax.set_xlim(0, xlim)
         #self.ax.set_ylim(0, ylim)
@@ -211,7 +361,16 @@ class IArray:
         y_low, y_high = self.ax.get_ylim()
         self.ax.set_aspect(abs((x_right - x_left) / (y_low - y_high)) * ratio)
 
-    def cleanLines(self):
+    def createDrawingLines(self, line):
+        basedLineWidth = 0.5
+        basedZOrder = 1.0
+        #Ground-to-gound
+        bump1, bump2 = line.link
+        line = Line2D([bump1.x, bump2.x],
+                      [bump1.y, bump2.y], color=line.color, linewidth=basedLineWidth+line.width, zorder=basedZOrder+line.level)
+        self.ax.add_line(line)
+
+    def cleanDrawingLines(self):
         for item in self.ax.lines:
             item.remove()
             del item
@@ -224,59 +383,9 @@ class IArray:
     def on_press(self, event):
         print('press', event.key)
         if event.key == 'd':
-            #print(len(self.ax.lines))
-            self.cleanLines()
-            self.fig.canvas.draw()
-            self.fig.canvas.flush_events()
+            self.cleanDrawingLines()
         elif event.key == 'a':
-            print(len(self.array))
-            GroundNum = 0
-            PowerNum = 0
-            SignalNum = 0
-            for i in range(len(self.array)):
-                for j in range(len(self.array[i])):
-                    if self.array[i][j] != None:
-                        self.drawShorts((i, j))
-                        if self.array[i][j].type == 0:
-                            GroundNum += 1
-                        elif self.array[i][j].type == 1:
-                            PowerNum += 1
-                        else:
-                            SignalNum += 1
-            self.fig.canvas.draw()
-            self.fig.canvas.flush_events()
-            self.ax.autoscale_view()
-            print("Ground-to-ground:", self.counting[0]/2)
-            print("Power-to-power:", self.counting[1]/2)
-            print("Power-to-ground:", self.counting[2]/2)
-            print("Power-to-signal:", self.counting[3]/2)
-            print("Inter-bundle signal-to-signal:", self.counting[4]/2)
-            print("Intra-bundle signal-to-signal:", self.counting[5]/2)
-            print("----------------------------------")
-            print("Bundle 1~40 power-to-signal:", (self.counting[3]/2 - self.bcounting[3]/2))
-            print("Bundle 1~40 inter-bundle signal-to-signal:", (self.counting[4]/2 - self.bcounting[4]/2))
-            print("Bundle 1~40 intra-bundle signal-to-signal:", (self.counting[5]/2 - self.bcounting[5]/2))
-            print("----------------------------------")
-            print("Bundle 41 power-to-signal:", self.bcounting[3]/2)
-            print("Bundle 41 inter-bundle signal-to-signal:", self.bcounting[4]/2)
-            print("Bundle 41 intra-bundle signal-to-signal:", self.bcounting[5]/2)
-
-            print("----------------------------------")
-            print("----------------------------------")
-            print("----------------------------------")
-            print("VSS-VCC shorts:", self.counting[2] / 2)
-            print("VSS-VSS shorts:", self.counting[0] / 2)
-            print("VCC-VCC shorts:", self.counting[1] / 2)
-            print("VSS-signal shorts:", self.counting[3] / 2)
-            print("VDD-signal shorts:", self.counting[6] / 2)
-            print("Signal-to-signal:", (self.counting[4]+self.counting[5]) / 2)
-            print("----------------------------------")
-            print("VCC opens:", PowerNum)
-            print("VSS opens:", GroundNum)
-            print("Signal opens:", SignalNum)
-            print("----------------------------------")
-            print("Weighted number:", ((self.counting[4]+self.counting[5])-(self.counting[0]+self.counting[1]))/2)
-
+            self.drawing_all_lines()
         elif event.key == '+' or event.key == '-':
             for item in self:
                 if event.key == '+':
@@ -285,26 +394,17 @@ class IArray:
                     item.sizeScaler -= 0.04
             self.cleanBumps()
             self.plot()
-            self.fig.canvas.draw()
-            self.fig.canvas.flush_events()
-            self.ax.autoscale_view()
         elif event.key == 'r':
             for item in self:
                 item.sizeScaler = 1.0
-            self.cleanLines()
+            self.cleanDrawingLines()
             self.cleanBumps()
             self.plot()
-            self.fig.canvas.draw()
-            self.fig.canvas.flush_events()
-            self.ax.autoscale_view()
-            for i in range(7):
-                self.counting[i] = 0
-                self.bcounting[i] = 0
+        self.fig.canvas.draw()
+        self.fig.canvas.flush_events()
+        self.ax.autoscale_view()
 
-    def rightclick(self, event):
-        #print('%s click: button=%d, x=%d, y=%d, xdata=%f, ydata=%f' %
-        #      ('double' if event.dblclick else 'single', event.button,
-        #       event.x, event.y, event.xdata, event.ydata))
+    def mouseclicks(self, event):
         if event.dblclick:
             tc = ((event.xdata + self.ux / 2) // self.ux).astype(int)
             ax, ay = self.anchorVector
@@ -319,7 +419,9 @@ class IArray:
             tr = ((event.ydata + self.uy / 2 - yoffset) // self.uy).astype(int)
             print("row: %d, col: %d" % (tr, tc))
             if tr >= 0 and tr < mr and tc >= 0 and tc < mc:
-                self.drawShorts((tr, tc))
+                linelist = self.search_Lines_by_Bump(self.marray[tr][tc])
+                for line in linelist:
+                   self.createDrawingLines(line)
                 self.fig.canvas.draw()
                 self.fig.canvas.flush_events()
                 self.ax.autoscale_view()
@@ -373,139 +475,3 @@ class IArray:
                 #plt.text(tx - 3, ty - 5, '-', fontsize=18, zorder=11)
         else:
             raise Exception('Array is empty!!')
-
-    def createLines(self, point1, point2):
-        r1, c1 = point1
-        r2, c2 = point2
-        bump1 = self.array[r1][c1]
-        bump2 = self.array[r2][c2]
-        linewidth = 0.5
-        zorder = 1.0
-        #Ground-to-gound
-        if bump1.type == 0 and bump2.type == 0:
-            color = 'chartreuse'
-            #color = 'white'
-            linewidth += 1
-            zorder = 2
-            self.counting[0] += 1
-        #Power-to-power
-        elif bump1.type == 1 and bump2.type == 1:
-            color = 'chartreuse'
-            #color = 'white'
-            linewidth += 1
-            zorder = 2
-            self.counting[1] += 1
-        #Power-to-ground
-        elif bump1.type < 2 and bump2.type < 2 and bump1.type != bump2.type:
-            color = 'red'
-            #color = 'white'
-            linewidth += 2
-            zorder = 5
-            self.counting[2] += 1
-        #Ground-to-signal
-        elif bump1.type == 0 or bump2.type == 0:
-            color = 'fuchsia'
-            #color = 'white'
-            self.counting[3] += 1
-            zorder = 0
-            if bump1.bundle == 41 or bump2.bundle == 41:
-                self.bcounting[3] += 1
-        #Power-to-signal
-        elif bump1.type == 1 or bump2.type == 1:
-            color = 'fuchsia'
-            #color = 'white'
-            self.counting[6] += 1
-            zorder = 0
-            if bump1.bundle == 41 or bump2.bundle == 41:
-                self.bcounting[6] += 1
-        #Inter-bundle signal-to-signal
-        elif bump1.bundle != bump2.bundle:
-            color = 'red'
-            color = 'black'
-            linewidth += 0
-            zorder = 0
-            self.counting[4] += 1
-            if bump1.bundle == 41 or bump2.bundle == 41:
-                self.bcounting[4] += 1
-        #Intra-bundle signal-to-signal
-        else:
-            color = 'black'
-            #color = 'white'
-            zorder = 0
-            self.counting[5] += 1
-            if bump1.bundle == 41 and bump2.bundle == 41:
-                self.bcounting[5] += 1
-            elif bump1.bundle == 41 or bump2.bundle == 41:
-                print("Something is wrong!!")
-        line = Line2D([bump1.x, bump2.x],
-                      [bump1.y, bump2.y], color=color, linewidth=linewidth, zorder=zorder)
-        self.ax.add_line(line)
-
-    def drawShorts(self, location):
-        tr, tc = location
-        mr, mc = self.ArraySize
-        ax, ay = self.anchorVector
-        # Upper line
-        if tr + 1 < mr and self.array[tr + 1][tc] != None:
-            #print("Draw upper line")
-            self.createLines((tr + 1, tc), (tr, tc))
-        # Bottom line
-        if tr - 1 >= 0 and self.array[tr - 1][tc] != None:
-            #print("Draw Bottom line")
-            self.createLines((tr - 1, tc), (tr, tc))
-        if tc + 2 < mc and self.array[tr][tc + 2] != None:
-            #print("Draw Bottom line")
-            self.createLines((tr, tc + 2), (tr, tc))
-        # Left-most
-        if tc - 2 >= 0 and self.array[tr][tc - 2] != None:
-            #print("Draw Bottom line")
-            self.createLines((tr, tc - 2), (tr, tc))
-        # Right-upper line
-        if tr + 1 < mr and tc + 1 < mc and self.array[tr + 1][tc + 1] != None:
-            #print("Draw right-upper line")
-            self.createLines((tr + 1, tc + 1), (tr, tc))
-        # Right-top line
-        if tr < mr and tc + 1 < mc and self.array[tr][tc + 1] != None:
-            #print("Draw right line")
-            self.createLines((tr, tc + 1), (tr, tc))
-        # Right-lower line
-        if tr - 1 >= 0 and tc + 1 < mc and self.array[tr - 1][tc + 1] != None:
-            #print("Draw right-lower line")
-            self.createLines((tr - 1, tc + 1), (tr, tc))
-
-        # Left-upper line
-        if tr + 1 < mr and tc - 1 >= 0 and self.array[tr + 1][tc - 1] != None:
-            #print("Draw left-upper line")
-            self.createLines((tr + 1, tc - 1), (tr, tc))
-        # left-top line
-        if tr < mr and tc - 1 >= 0 and self.array[tr][tc - 1] != None:
-            #print("Draw left line")
-            self.createLines((tr, tc - 1), (tr, tc))
-        # left-lower line
-        if tr - 1 >= 0 and tc - 1 >= 0 and self.array[tr - 1][tc - 1] != None:
-            #print("Draw left-lower line:")
-            self.createLines((tr - 1, tc - 1), (tr, tc))
-
-        if ay < 0:
-            factor = 0
-        else:
-            factor = 1
-
-        if ((tc+factor) % 2) == 0:
-            # Right-top line
-            if tr + 2 < mr and tc + 1 < mc and self.array[tr + 2][tc + 1] != None:
-                #print("Draw right-top line")
-                self.createLines((tr + 2, tc + 1), (tr, tc))
-            # Left-upper line
-            if tr + 2 < mr and tc - 1 >= 0 and self.array[tr + 2][tc - 1] != None:
-                #print("Draw left-upper line")
-                self.createLines((tr + 2, tc - 1), (tr, tc))
-        else:
-            # Right-bottom line
-            if tr - 2 >= 0 and tc + 1 < mc and self.array[tr - 2][tc + 1] != None:
-                #print("Draw Right-bottom line")
-                self.createLines((tr - 2, tc + 1), (tr, tc))
-            # left-lower line
-            if tr - 2 >= 0 and tc - 1 >= 0 and self.array[tr - 2][tc - 1] != None:
-                #print("Draw left-lower line:")
-                self.createLines((tr - 2, tc - 1), (tr, tc))

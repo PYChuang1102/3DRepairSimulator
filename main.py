@@ -4,9 +4,9 @@ from LayoutParser import *
 grid_ratio = 1
 
 if __name__ == "__main__":
-    myarray = IArray()
+    UCIeLayout = IArray()
     dir = os.getcwd() + "\\.\\data\\"
-    layoutfilename = "\\UCIePitch25-37.csv"
+    layoutfilename = "\\UCIePitch38-50.csv"
     listfilename = "\\test.csv"
 
     # Parse layout form to a list form
@@ -15,17 +15,18 @@ if __name__ == "__main__":
     parser.write_csv(dir + listfilename)
 
     # Read layout from the list format file
-    myarray.read_csv(dir + listfilename)
+    UCIeLayout.read_csv(dir + listfilename)
     # Construct micro-bump map
-    array = myarray.construct_imap()
+    marray = UCIeLayout.construct_imap()
+    larray = UCIeLayout.construct_lmap()
     # Create the micro-bump array figure
-    myarray.create_fig()
+    UCIeLayout.create_fig()
     # Setting drawing ratio
-    myarray.set_XYRatio(grid_ratio)
+    UCIeLayout.set_XYRatio(grid_ratio)
     # Plot the figure
-    myarray.plot()
+    UCIeLayout.plot()
     # Update the figure
-    myarray.ax.autoscale_view()
+    UCIeLayout.ax.autoscale_view()
     # Show the plotted figure
     plt.show()
 
