@@ -458,7 +458,8 @@ class IArray:
                 elif type == 'Spare':
                     edgecolor = 'black'
                     facecolor = colorBoard[item.bundle%15]
-                    #facecolor = colorBoard[item.color+1]
+                    #edgecolor = colorBoard[item.bundle % 15]
+                    edgecolor = 'orange'
                 elif type == 'Vdd':
                     edgecolor = 'red'
                     facecolor = 'white'

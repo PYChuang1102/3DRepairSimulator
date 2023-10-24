@@ -59,6 +59,35 @@ bundles = {
     25:11,
 }
 
+types = {
+    0:0,
+    1:1,
+    2:2,
+    3:2,
+    4:3,
+    5:2,
+    6:2,
+    7:3,
+    8:2,
+    9:3,
+    10:2,
+    11:2,
+    12:3,
+    13:3,
+    14:2,
+    15:2,
+    16:3,
+    17:2,
+    18:2,
+    19:3,
+    20:2,
+    21:3,
+    22:2,
+    23:2,
+    24:3,
+    25:3,
+}
+
 class layoutParser:
     def __init__(self):
         self.name = ""
@@ -88,6 +117,7 @@ class layoutParser:
                         itemlist = []
                         idx = channels[signal]
                         mybundle = bundles[idx]
+                        mytype = types[idx]
                         if idx == 6 and busNo >= 32:
                             mybundle = 12
                         if idx == 7 and busNo >= 2:
@@ -104,7 +134,7 @@ class layoutParser:
                         itemlist.append(0.05)
                         itemlist.append(mybundle)
                         itemlist.append(int(0))
-                        itemlist.append((mybundle if mybundle <= 1 else 3))
+                        itemlist.append(mytype)
                         self.array.append(itemlist)
                         del(itemlist)
 
