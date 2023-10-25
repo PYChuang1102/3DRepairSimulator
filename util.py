@@ -27,7 +27,7 @@ colorBoard = {-1: 'white',
 bumpType = {0: 'Vss',
             1: 'Vdd',
             2: 'Function',
-            3: 'Spare'
+            3: 'Spare',
 }
 
 # format: key: [groupIdx, color, lineLevels, lineWidth]
@@ -39,7 +39,18 @@ shortType = {'None': [-1, 'white', 0, 0],
              'vdd-signal': [4, 'fuchsia', 0, 0],
              'inter-bundle-signal-signal': [5, 'black', 0, 0],
              'intra-bundle-signal-signal': [6, 'black', 0, 0],
-}
+
+             'vss-spare': [7, 'lightseagreen', 1, 0],
+             'vdd-spare': [8, 'lightseagreen', 1, 0],
+
+             'inter-bundle-signal-spare-allow-short': [9, 'chartreuse', 2, 1],
+             'inter-bundle-signal-spare-not-allow-short': [10, 'black', 0, 0],
+             'intra-bundle-signal-spare': [11, 'black', 0, 0],
+
+             'inter-bundle-spare-spare': [12, 'black', 0, 0],
+             'intra-bundle-spare-spare': [13, 'black', 0, 0],
+
+             }
 
 class ExpoLogarithmic(object):
     def __init__(self):
@@ -202,17 +213,38 @@ class IArray:
         elif bump1.type < 2 and bump2.type < 2 and bump1.type != bump2.type:
             line = Line(point1=bump1, point2=bump2, linetype='vdd-vss')
         #Ground-to-signal
-        elif bump1.type == 0 or bump2.type == 0:
+        elif (bump1.type == 0 and bump2.type == 2) or (bump1.type == 2 and bump2.type == 0):
             line = Line(point1=bump1, point2=bump2, linetype='vss-signal')
         #Power-to-signal
-        elif bump1.type == 1 or bump2.type == 1:
+        elif (bump1.type == 1 and bump2.type == 2) or (bump1.type == 2 and bump2.type == 1):
             line = Line(point1=bump1, point2=bump2, linetype='vdd-signal')
         #Inter-bundle signal-to-signal
-        elif bump1.bundle != bump2.bundle:
+        elif bump1.type == 1 and bump2.type == 1 and bump1.bundle == bump2.bundle:
             line = Line(point1=bump1, point2=bump2, linetype='inter-bundle-signal-signal')
         #Intra-bundle signal-to-signal
-        else:
+        elif bump1.type == 1 and bump2.type == 1 and bump1.bundle != bump2.bundle:
             line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-signal')
+        #vss-spare
+        elif (bump1.type == 0 and bump2.type == 3) or (bump1.type == 3 and bump2.type == 0):
+            line = Line(point1=bump1, point2=bump2, linetype='vss-spare')
+        #vdd-spare
+        elif (bump1.type == 1 and bump2.type == 3) or (bump1.type == 3 and bump2.type == 1):
+            line = Line(point1=bump1, point2=bump2, linetype='vdd-spare')
+        #intra-bundle-signal-spare
+        elif ((bump1.type == 2 and bump2.type == 3) or (bump1.type == 3 and bump2.type == 2)) and bump1.bundle != bump2.bundle:
+            line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare')
+        #inter-bundle-spare-spare
+        elif bump1.type == 3 and bump2.type == 3 and bump1.bundle == bump2.bundle:
+            line = Line(point1=bump1, point2=bump2, linetype='inter-bundle-spare-spare')
+        #intra-bundle-spare-spare
+        elif bump1.type == 3 and bump2.type == 3 and bump1.bundle != bump2.bundle:
+            line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-spare-spare')
+        #inter-bundle-signal-spare-allow-short
+
+        #inter-bundle-signal-spare-not-allow-short
+        else:
+            line = Line(point1=bump1, point2=bump2, linetype='inter-bundle-signal-spare-not-allow-short')
+
         return line
 
     def check_is_line(self, bump1, bump2):
