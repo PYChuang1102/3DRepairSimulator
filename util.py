@@ -40,15 +40,15 @@ shortType = {'None': [-1, 'white', 0, 0],
              'inter-bundle-signal-signal': [5, 'black', 0, 0],
              'intra-bundle-signal-signal': [6, 'black', 0, 0],
 
-             'vss-spare': [7, 'lightseagreen', 1, 0],
-             'vdd-spare': [8, 'lightseagreen', 1, 0],
+             'vss-spare': [7, 'orange', 1, 0],
+             'vdd-spare': [8, 'orange', 1, 0],
 
-             'inter-bundle-signal-spare-allow-short': [9, 'chartreuse', 2, 1],
-             'inter-bundle-signal-spare-not-allow-short': [10, 'black', 0, 0],
-             'intra-bundle-signal-spare': [11, 'black', 0, 0],
+             'intra-bundle-signal-spare-allow-short': [9, 'chartreuse', 2, 1],
+             'intra-bundle-signal-spare-not-allow-short': [10, 'black', 0, 0],
+             'inter-bundle-signal-spare': [11, 'black', 0, 0],
 
-             'inter-bundle-spare-spare': [12, 'black', 0, 0],
-             'intra-bundle-spare-spare': [13, 'black', 0, 0],
+             'intra-bundle-spare-spare': [12, 'black', 0, 0],
+             'inter-bundle-spare-spare': [13, 'black', 0, 0],
 
              }
 
@@ -65,7 +65,7 @@ class ExpoLogarithmic(object):
         return 1 - np.exp(-λ * x) ** α
 
 class Bump(object):
-    def __init__(self, name='', id=0, row=-1, col=-1, x=-1.0, y=-1.0, size=0., bundle=0, color=0, type=2):
+    def __init__(self, name='', id=0, row=-1, col=-1, x=-1.0, y=-1.0, size=0., bundle=0, color=0, type=2, itemname=''):
         self.name = name
         self.id = id
         self.row = row
@@ -76,6 +76,7 @@ class Bump(object):
         self.bundle = bundle
         self.color = color
         self.type = type
+        self.itemname = itemname
 
         self.sizeScaler = 1.0
 
@@ -169,9 +170,8 @@ class IArray:
         id = 0
         for element in data:
             self.append(Bump(name='', id=id, row=int(element[0]), col=int(element[1]), x=float(element[2]), y=float(element[3]),
-                             size=float(element[4]), bundle=int(element[5]), color=int(element[6]), type=int(element[7])))
+                             size=float(element[4]), bundle=int(element[5]), color=int(element[6]), type=int(element[7]), itemname=str(element[8])))
             id+=1
-
     def createCheckboard(self, n, m):
         list_0_1 = np.array([[0, 1], [1, 0]])
         checkerboard = np.tile(list_0_1, (n // 2, m // 2))
@@ -220,10 +220,10 @@ class IArray:
             line = Line(point1=bump1, point2=bump2, linetype='vdd-signal')
         #Inter-bundle signal-to-signal
         elif bump1.type == 1 and bump2.type == 1 and bump1.bundle == bump2.bundle:
-            line = Line(point1=bump1, point2=bump2, linetype='inter-bundle-signal-signal')
+            line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-signal')
         #Intra-bundle signal-to-signal
         elif bump1.type == 1 and bump2.type == 1 and bump1.bundle != bump2.bundle:
-            line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-signal')
+            line = Line(point1=bump1, point2=bump2, linetype='inter-bundle-signal-signal')
         #vss-spare
         elif (bump1.type == 0 and bump2.type == 3) or (bump1.type == 3 and bump2.type == 0):
             line = Line(point1=bump1, point2=bump2, linetype='vss-spare')
@@ -232,19 +232,53 @@ class IArray:
             line = Line(point1=bump1, point2=bump2, linetype='vdd-spare')
         #intra-bundle-signal-spare
         elif ((bump1.type == 2 and bump2.type == 3) or (bump1.type == 3 and bump2.type == 2)) and bump1.bundle != bump2.bundle:
-            line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare')
+            line = Line(point1=bump1, point2=bump2, linetype='inter-bundle-signal-spare')
         #inter-bundle-spare-spare
         elif bump1.type == 3 and bump2.type == 3 and bump1.bundle == bump2.bundle:
-            line = Line(point1=bump1, point2=bump2, linetype='inter-bundle-spare-spare')
+            line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-spare-spare')
         #intra-bundle-spare-spare
         elif bump1.type == 3 and bump2.type == 3 and bump1.bundle != bump2.bundle:
-            line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-spare-spare')
-        #inter-bundle-signal-spare-allow-short
-
-        #inter-bundle-signal-spare-not-allow-short
+            line = Line(point1=bump1, point2=bump2, linetype='inter-bundle-spare-spare')
         else:
-            line = Line(point1=bump1, point2=bump2, linetype='inter-bundle-signal-spare-not-allow-short')
+            #inter-bundle-signal-spare-allow-short
+            if (bump1.itemname == ' rxdata63' and bump2.itemname == ' rxdataRD3') or (bump1.itemname == ' rxdataRD3' and bump2.itemname == ' rxdata63'):
+                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
+            elif (bump1.itemname == ' rxdata32' and bump2.itemname == ' rxdataRD2') or (bump1.itemname == ' rxdataRD2' and bump2.itemname == ' rxdata32'):
+                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
+            elif (bump1.itemname == ' rxdata31' and bump2.itemname == ' rxdataRD1') or (bump1.itemname == ' rxdataRD1' and bump2.itemname == ' rxdata31'):
+                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
+            elif (bump1.itemname == ' rxdata0' and bump2.itemname == ' rxdataRD0') or (bump1.itemname == ' rxdataRD0' and bump2.itemname == ' rxdata0'):
+                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
 
+            elif (bump1.itemname == ' txdata63' and bump2.itemname == ' txdataRD3') or (bump1.itemname == ' txdataRD3' and bump2.itemname == ' txdata63'):
+                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
+            elif (bump1.itemname == ' txdata32' and bump2.itemname == ' txdataRD2') or (bump1.itemname == ' txdataRD2' and bump2.itemname == ' txdata32'):
+                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
+            elif (bump1.itemname == ' txdata31' and bump2.itemname == ' txdataRD1') or (bump1.itemname == ' txdataRD1' and bump2.itemname == ' txdata31'):
+                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
+            elif (bump1.itemname == ' txdata0' and bump2.itemname == ' txdataRD0') or (bump1.itemname == ' txdataRD0' and bump2.itemname == ' txdata0'):
+                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
+
+            elif (bump1.itemname == ' rxcksb' and bump2.itemname == ' rxcksbRD') or (bump1.itemname == ' rxcksbRD' and bump2.itemname == ' rxcksb'):
+                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
+            elif (bump1.itemname == ' rxdatasb' and bump2.itemname == ' rxdatasbRD') or (bump1.itemname == ' rxdatasbRD' and bump2.itemname == ' rxdatasb'):
+                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
+            elif (bump1.itemname == ' rxckn' and bump2.itemname == ' rxckRD') or (bump1.itemname == ' rxckRD' and bump2.itemname == ' rxckn'):
+                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
+            elif (bump1.itemname == ' rxvld' and bump2.itemname == ' rxvldRD') or (bump1.itemname == ' rxvldRD' and bump2.itemname == ' rxvld'):
+                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
+
+            elif (bump1.itemname == ' txcksb' and bump2.itemname == ' txcksbRD') or (bump1.itemname == ' txcksbRD' and bump2.itemname == ' txcksb'):
+                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
+            elif (bump1.itemname == ' txdatasb' and bump2.itemname == ' txdatasbRD') or (bump1.itemname == ' txdatasbRD' and bump2.itemname == ' txdatasb'):
+                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
+            elif (bump1.itemname == ' txckn' and bump2.itemname == ' txckRD') or (bump1.itemname == ' txckRD' and bump2.itemname == ' txckn'):
+                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
+            elif (bump1.itemname == ' txvld' and bump2.itemname == ' txvldRD') or (bump1.itemname == ' txvldRD' and bump2.itemname == ' txvld'):
+                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
+            #inter-bundle-signal-spare-not-allow-short
+            else:
+                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-not-allow-short')
         return line
 
     def check_is_line(self, bump1, bump2):

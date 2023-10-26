@@ -108,9 +108,11 @@ class layoutParser:
                         #print("row:{}, col:{}".format(row, col))
                         print("item: {}".format(str(item)))
                         match = re.match(r"([a-z]+)([0-9]+)", item, re.I)
+                        # txdata, txdataRD, rxdata, rxdataRD
                         if match:
                             signal = match.groups()[0]
                             busNo = int(match.groups()[1])
+                        # others s.t. vss, vdd, control, controlRD
                         else:
                             signal = item
                             busNo = 0
@@ -135,6 +137,7 @@ class layoutParser:
                         itemlist.append(mybundle)
                         itemlist.append(int(0))
                         itemlist.append(mytype)
+                        itemlist.append(item)
                         self.array.append(itemlist)
                         del(itemlist)
 
@@ -150,7 +153,7 @@ class layoutParser:
 
     def write_csv(self, filename):
         with open(filename, "w") as f:
-            f.write("Row, Column, X, Y, Size, Bundle, Code word, Type\n")
+            f.write("Row, Column, X, Y, Size, Bundle, Code word, Type, Item\n")
             for idx, element in enumerate(self.array):
                 for item in element:
                     f.write(str(item))
