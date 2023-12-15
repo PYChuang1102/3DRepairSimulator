@@ -1,3 +1,5 @@
+import matplotlib.pyplot as plt
+
 from util import *
 from LayoutParser import *
 
@@ -6,10 +8,8 @@ grid_ratio = 1
 if __name__ == "__main__":
     UCIeLayout = IArray()
     dir = os.getcwd() + "\\.\\data\\"
-    layoutfilename = "\\UCIePitch38-50.csv"
+    layoutfilename = "\\UCIePitch51-55.csv"
     listfilename = "\\test.csv"
-
-    print("Hello Annie!")
 
     # Parse layout form to a list form
     parser = layoutParser()
@@ -31,5 +31,4 @@ if __name__ == "__main__":
     UCIeLayout.ax.autoscale_view()
     # Show the plotted figure
     plt.show()
-
     # Press 'a' to get the statistical results

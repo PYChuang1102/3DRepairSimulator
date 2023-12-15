@@ -4,25 +4,26 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as patch
 import csv
 from matplotlib.lines import Line2D
+import matplotlib.ticker as ticker
 from scipy.stats import weibull_min
 
 colorBoard = {-1: 'white',
               0: 'black',
-              1: 'royalblue',
-              2: 'red',
-              3: 'hotpink',
-              4: 'limegreen',
-              5: 'blue',
-              6: 'navy',
-              7: 'purple',
-              8: 'maroon',
-              9: 'yellow',
-              10: 'olive',
-              11: 'lightseagreen',
-              12: 'aquamarine',
-              13: 'rebeccapurple',
-              14: 'crimson'
-}
+              1: 'gray',
+              2: 'hotpink',
+              3: 'royalblue',   #rxdata 0-31
+              4: 'maroon',
+              5: 'silver',
+              6: 'olive',
+              7: 'lightgreen',
+              8: 'orange',        # txdata 32-63
+              9: 'darkorchid',
+              10: 'tomato',
+              11: 'aqua',
+              12: 'paleturquoise', #rxdata 32-63
+              13: 'khaki', # txdata 0-31
+              14: 'darkorange'
+              }
 
 bumpType = {0: 'Vss',
             1: 'Vdd',
@@ -31,6 +32,41 @@ bumpType = {0: 'Vss',
 }
 
 # format: key: [groupIdx, color, lineLevels, lineWidth]
+# color rule:
+# chartreuse:   -0,         do not need repair
+# red:                      dead
+# fuchsia:      -1/bundle,  need repair
+# orange:       -1/bundle,  do not need repair
+# blue:         -2,         do not need repair
+# black:        -2,         need repair
+
+
+# for checking how many spare we lose
+shortType = {'None': [-1, 'white', 0, 0],
+             'vss-vss': [0, 'chartreuse', 2, 1],
+             'vdd-vdd': [1, 'chartreuse', 2, 1],
+             'vdd-vss': [2, 'red', 5, 1.5],
+             'vss-signal': [3, 'fuchsia', 0, 0],
+             'vdd-signal': [4, 'fuchsia', 0, 0],
+             'inter-bundle-signal-signal': [5, 'black', 0, 0],
+             'intra-bundle-signal-signal': [6, 'black', 0, 0],
+
+             'vss-spare': [7, 'fuchsia', 0, 0],
+             'vdd-spare': [8, 'fuchsia', 0, 0],
+
+             'intra-bundle-signal-spare-allow-short': [9, 'fuchsia', 0, 0],
+             'intra-bundle-signal-spare-not-allow-short': [10, 'black', 0, 0],
+             'inter-bundle-signal-spare': [11, 'black', 0, 0],
+
+             'intra-bundle-spare-spare': [12, 'black', 0, 0],
+             'inter-bundle-spare-spare': [13, 'black', 0, 0],
+
+             'trk-clk-signal-spare':[14, 'fuchsia', 0, 0]
+
+             }
+
+'''
+# for checking required number of repaired spares / drawing short lines
 shortType = {'None': [-1, 'white', 0, 0],
              'vss-vss': [0, 'chartreuse', 2, 1],
              'vdd-vdd': [1, 'chartreuse', 2, 1],
@@ -40,18 +76,46 @@ shortType = {'None': [-1, 'white', 0, 0],
              'inter-bundle-signal-signal': [5, 'black', 0, 0],
              'intra-bundle-signal-signal': [6, 'black', 0, 0],
 
-             'vss-spare': [7, 'orange', 1, 0],
-             'vdd-spare': [8, 'orange', 1, 0],
+             'vss-spare': [7, 'chartreuse', 1, 1],
+             'vdd-spare': [8, 'chartreuse', 1, 1],
 
              'intra-bundle-signal-spare-allow-short': [9, 'chartreuse', 2, 1],
+             'intra-bundle-signal-spare-not-allow-short': [10, 'fuchsia', 0, 0],
+             'inter-bundle-signal-spare': [11, 'fuchsia', 0, 0],
+
+             'intra-bundle-spare-spare': [12, 'chartreuse', 0, 0],
+             'inter-bundle-spare-spare': [13, 'chartreuse', 0, 1],
+
+             'trk-clk-signal-spare':[14, 'fuchsia', 0, 1]
+
+             }
+'''
+'''
+# for calculating yield (repair rate)
+# use this when running DefectCalculation_v2.py
+shortType = {'None': [-1, 'white', 0, 0],
+             'vss-vss': [0, 'chartreuse', 2, 1],
+             'vdd-vdd': [1, 'chartreuse', 2, 1],
+             'vdd-vss': [2, 'red', 5, 2],
+             'vss-signal': [3, 'black', 0, 0],
+             'vdd-signal': [4, 'black', 0, 0],
+             'inter-bundle-signal-signal': [5, 'black', 0, 0],
+             'intra-bundle-signal-signal': [6, 'black', 0, 0],
+
+             'vss-spare': [7, 'blue', 1, 1],
+             'vdd-spare': [8, 'blue', 1, 1],
+
+             'intra-bundle-signal-spare-allow-short': [9, 'orange', 2, 1],
              'intra-bundle-signal-spare-not-allow-short': [10, 'black', 0, 0],
              'inter-bundle-signal-spare': [11, 'black', 0, 0],
 
-             'intra-bundle-spare-spare': [12, 'black', 0, 0],
-             'inter-bundle-spare-spare': [13, 'black', 0, 0],
+             'intra-bundle-spare-spare': [12, 'blue', 0, 0],
+             'inter-bundle-spare-spare': [13, 'blue', 0, 1],
+
+             'trk-clk-signal-spare':[14, 'fuchsia', 0, 1]
 
              }
-
+'''
 class ExpoLogarithmic(object):
     def __init__(self):
         return self
@@ -128,6 +192,8 @@ class IArray:
         for i in range(3):
             self.SingleOpenErrorSum.append(0)
             self.SingleOpenErrorRate.append(0)
+
+        self.line_num = [0] * len(self.bump)
 
     def __iter__(self):
         return self
@@ -218,11 +284,11 @@ class IArray:
         #Power-to-signal
         elif (bump1.type == 1 and bump2.type == 2) or (bump1.type == 2 and bump2.type == 1):
             line = Line(point1=bump1, point2=bump2, linetype='vdd-signal')
-        #Inter-bundle signal-to-signal
-        elif bump1.type == 1 and bump2.type == 1 and bump1.bundle == bump2.bundle:
-            line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-signal')
         #Intra-bundle signal-to-signal
-        elif bump1.type == 1 and bump2.type == 1 and bump1.bundle != bump2.bundle:
+        elif bump1.type == 2 and bump2.type == 2 and bump1.bundle == bump2.bundle:
+            line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-signal')
+        #Inter-bundle signal-to-signal
+        elif bump1.type == 2 and bump2.type == 2 and bump1.bundle != bump2.bundle:
             line = Line(point1=bump1, point2=bump2, linetype='inter-bundle-signal-signal')
         #vss-spare
         elif (bump1.type == 0 and bump2.type == 3) or (bump1.type == 3 and bump2.type == 0):
@@ -230,17 +296,17 @@ class IArray:
         #vdd-spare
         elif (bump1.type == 1 and bump2.type == 3) or (bump1.type == 3 and bump2.type == 1):
             line = Line(point1=bump1, point2=bump2, linetype='vdd-spare')
-        #intra-bundle-signal-spare
+        #inter-bundle-signal-spare
         elif ((bump1.type == 2 and bump2.type == 3) or (bump1.type == 3 and bump2.type == 2)) and bump1.bundle != bump2.bundle:
             line = Line(point1=bump1, point2=bump2, linetype='inter-bundle-signal-spare')
-        #inter-bundle-spare-spare
+        #intra-bundle-spare-spare
         elif bump1.type == 3 and bump2.type == 3 and bump1.bundle == bump2.bundle:
             line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-spare-spare')
-        #intra-bundle-spare-spare
+        #inter-bundle-spare-spare
         elif bump1.type == 3 and bump2.type == 3 and bump1.bundle != bump2.bundle:
             line = Line(point1=bump1, point2=bump2, linetype='inter-bundle-spare-spare')
         else:
-            #inter-bundle-signal-spare-allow-short
+            #intra-bundle-signal-spare-allow-short
             if (bump1.itemname == ' rxdata63' and bump2.itemname == ' rxdataRD3') or (bump1.itemname == ' rxdataRD3' and bump2.itemname == ' rxdata63'):
                 line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
             elif (bump1.itemname == ' rxdata32' and bump2.itemname == ' rxdataRD2') or (bump1.itemname == ' rxdataRD2' and bump2.itemname == ' rxdata32'):
@@ -264,7 +330,11 @@ class IArray:
             elif (bump1.itemname == ' rxdatasb' and bump2.itemname == ' rxdatasbRD') or (bump1.itemname == ' rxdatasbRD' and bump2.itemname == ' rxdatasb'):
                 line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
             elif (bump1.itemname == ' rxckn' and bump2.itemname == ' rxckRD') or (bump1.itemname == ' rxckRD' and bump2.itemname == ' rxckn'):
-                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
+                line = Line(point1=bump1, point2=bump2, linetype='trk-clk-signal-spare')
+            elif (bump1.itemname == ' rxckp' and bump2.itemname == ' rxckRD') or (bump1.itemname == ' rxckRD' and bump2.itemname == ' rxckp'):
+                line = Line(point1=bump1, point2=bump2, linetype='trk-clk-signal-spare')
+            elif (bump1.itemname == ' rxtrk' and bump2.itemname == ' rxckRD') or (bump1.itemname == ' rxckRD' and bump2.itemname == ' rxtrk'):
+                line = Line(point1=bump1, point2=bump2, linetype='trk-clk-signal-spare')
             elif (bump1.itemname == ' rxvld' and bump2.itemname == ' rxvldRD') or (bump1.itemname == ' rxvldRD' and bump2.itemname == ' rxvld'):
                 line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
 
@@ -273,7 +343,11 @@ class IArray:
             elif (bump1.itemname == ' txdatasb' and bump2.itemname == ' txdatasbRD') or (bump1.itemname == ' txdatasbRD' and bump2.itemname == ' txdatasb'):
                 line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
             elif (bump1.itemname == ' txckn' and bump2.itemname == ' txckRD') or (bump1.itemname == ' txckRD' and bump2.itemname == ' txckn'):
-                line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
+                line = Line(point1=bump1, point2=bump2, linetype='trk-clk-signal-spare')
+            elif (bump1.itemname == ' txckp' and bump2.itemname == ' txckRD') or (bump1.itemname == ' txckRD' and bump2.itemname == ' txckp'):
+                line = Line(point1=bump1, point2=bump2, linetype='trk-clk-signal-spare')
+            elif (bump1.itemname == ' txtrk' and bump2.itemname == ' txckRD') or (bump1.itemname == ' txckRD' and bump2.itemname == ' txtrk'):
+                line = Line(point1=bump1, point2=bump2, linetype='trk-clk-signal-spare')
             elif (bump1.itemname == ' txvld' and bump2.itemname == ' txvldRD') or (bump1.itemname == ' txvldRD' and bump2.itemname == ' txvld'):
                 line = Line(point1=bump1, point2=bump2, linetype='intra-bundle-signal-spare-allow-short')
             #inter-bundle-signal-spare-not-allow-short
@@ -367,7 +441,31 @@ class IArray:
     def construct_lmap(self):
         for bump in self:
             self.createLinesByBump(bump)
-        print("Total number of lines: ", len(self.larray))
+
+        print("\nTotal number of lines: ", len(self.larray))
+
+        print("\nnumber of Vss: ", sum(1 for bump in self.bump if bump.type == 0))
+        print("number of Vdd: ", sum(1 for bump in self.bump if bump.type == 1))
+        print("number of function: ", sum(1 for bump in self.bump if bump.type == 2))
+        print("number of spare: ", sum(1 for bump in self.bump if bump.type == 3))
+
+        print("\nnumber of red lines: ", sum(1 for line in self.larray if line.color == 'red'))
+        print("number of green lines: ", sum(1 for line in self.larray if line.color == 'chartreuse'))
+        print("number of blue lines (-2, no repair): ", sum(1 for line in self.larray if line.color == 'blue'))
+        print("number of black lines (-2, need repair): ", sum(1 for line in self.larray if line.color == 'black'))
+        print("number of orange lines (-1, no repair): ", sum(1 for line in self.larray if line.color == 'orange'))
+        print("number of pink lines(-1, need repair): ", sum(1 for line in self.larray if line.color == 'fuchsia'))
+
+        print("\nRequire no repair (Vss-Vss, Vdd-Vdd): ", sum(1 for line in self.larray if (line.type=='vss-vss' or line.type=='vdd-vdd')))
+        print("Require no repair (others): ", sum(1 for line in self.larray if (line.type=='intra-bundle-spare-spare' or line.type=='inter-bundle-spare-spare'
+                                                                                  or line.type=='vss-spare' or line.type=='vdd-spare'
+                                                                                  )))
+        print("Require 1 spare: ", sum(1 for line in self.larray if (line.type=='vss-signal' or line.type=='vdd-signal'
+                                                                     or line.type=='intra-bundle-signal-spare-allow-short' or line.type=='intra-bundle-signal-spare-not-allow-short'
+                                                                     or line.type=='inter-bundle-signal-spare' or line.type=='trk-clk-signal-spare')))
+        print("Require 2 spares: ", sum(1 for line in self.larray if (line.type=='inter-bundle-signal-signal' or line.type=='intra-bundle-signal-signal')))
+        print("Catastrophic: ", sum(1 for line in self.larray if line.type=='vdd-vss'))
+        return self.larray
 
     def drawing_all_lines(self):
         # Drawing all lines:
@@ -465,6 +563,7 @@ class IArray:
             self.cleanDrawingLines()
         elif event.key == 'a':
             self.drawing_all_lines()
+            plt.savefig('51-55.png', dpi=1000)
         elif event.key == '+' or event.key == '-':
             for item in self:
                 if event.key == '+':
@@ -505,6 +604,15 @@ class IArray:
                 self.fig.canvas.flush_events()
                 self.ax.autoscale_view()
 
+    def calculate_line_num(self):
+        self.line_num = [0]*len(self)
+        #print("len of line_num: ", len(self.line_num))
+        for line in self.larray:
+            bump1, bump2 = line.link
+            self.line_num[bump1.id]+=1
+            self.line_num[bump2.id]+=1
+        #print(self.line_num)
+
     def plot(self):
         if self.bump:
             x = []
@@ -516,42 +624,76 @@ class IArray:
                 size = item.size
                 scaler = item.sizeScaler
                 type = bumpType[int(item.type)]
-                if type == 'Function':
-                    #edgecolor = colorBoard[item.bundle%15]
-                    #facecolor = colorBoard[item.color+1]
-                    edgecolor = 'black'
-                    facecolor = colorBoard[item.bundle%15]
-                elif type == 'Spare':
+                if type == 'Spare':
                     edgecolor = 'black'
                     facecolor = colorBoard[item.bundle%15]
                     #edgecolor = colorBoard[item.bundle % 15]
-                    edgecolor = 'orange'
-                elif type == 'Vdd':
-                    edgecolor = 'red'
-                    facecolor = 'white'
-                    textPlus.append(xy)
-                elif type == 'Vss':
-                    edgecolor = 'black'
-                    facecolor = 'white'
-                    textMinus.append(xy)
+                    #edgecolor = 'orange'
+                    linewidth=1
+                    xy = (item.x-size * scaler * 125.0, item.y-size * scaler * 125.0)
+                    #self.ax.add_patch(plt.Rectangle(xy=xy, width=size * scaler * 250.0, height=size * scaler * 250.0,
+                    #                             edgecolor=edgecolor, facecolor=facecolor,
+                    #                             linewidth=linewidth, zorder=10))
+                    self.ax.add_patch(plt.Polygon([[item.x-size * scaler * 150.0, item.y-size * scaler * 150.0],[item.x+size * scaler * 150.0, item.y-size * scaler * 150.0],[item.x, item.y+size * scaler * 150.0]],
+                                                    edgecolor=edgecolor, facecolor=facecolor,
+                                                    linewidth=linewidth, zorder=10))
+
                 else:
-                    edgecolor = colorBoard[-1]
-                    facecolor = colorBoard[-1]
-                #edgecolor = 'black'
-                #facecolor = 'white'
-                self.ax.add_patch(plt.Circle(xy=xy, radius=size*scaler*150.0,
-                                             edgecolor=edgecolor, facecolor=facecolor,
-                                             linewidth=1, zorder=10))
+                    if type == 'Function':
+                        #edgecolor = colorBoard[item.bundle%15]
+                        #facecolor = colorBoard[item.color+1]
+                        edgecolor = 'black'
+                        facecolor = colorBoard[item.bundle%15]
+                        linewidth=1
+
+                    elif type == 'Vdd':
+                        edgecolor = 'red'
+                        facecolor = 'white'
+                        textPlus.append(xy)
+                        linewidth=1
+                    elif type == 'Vss':
+                        edgecolor = 'black'
+                        facecolor = 'white'
+                        textMinus.append(xy)
+                        linewidth=1
+                    else:
+                        edgecolor = colorBoard[-1]
+                        facecolor = colorBoard[-1]
+                    #edgecolor = 'black'
+                    #facecolor = 'white'
+                    self.ax.add_patch(plt.Circle(xy=xy, radius=size*scaler*150.0,
+                                                 edgecolor=edgecolor, facecolor=facecolor,
+                                                 linewidth=linewidth, zorder=10))
+                self.calculate_line_num()
+                line_num = str(12-self.line_num[item.id])
+                # plt.text(item.x - 3, item.y - 5, line_num, fontsize=size*scaler*100.0, zorder=12)
                 x.append(float(item.x))
                 y.append(float(item.y))
             self.ax.scatter(x, y, s=0, marker='o')
+            fmt_x = ticker.FuncFormatter(lambda x, _: int(x / 22))
+            fmt_y = ticker.FuncFormatter(lambda y, _: int(y / 25 *2))
+            self.ax.xaxis.set_major_formatter(fmt_x)
+            self.ax.yaxis.set_major_formatter(fmt_y)
+            self.ax.xaxis.set_tick_params(labelsize=10*0.8)
+            self.ax.yaxis.set_tick_params(labelsize=10*0.8)
+            plt.xticks(np.arange(0,16*22,2*22))
+            #plt.rcParams["figure.figsize"] = (5,40)
+            '''
+            max_x = max(x)
+            min_x = min(x)
+            width = max_x - min_x
+
+            # Set the width of the figure to match the width of the array
+            self.ax.set_xlim(min_x - 5, max_x + 5)
+            '''
             for item in textPlus:
                 tx, ty = item
                 #plt.text(tx-5, ty-4, '+', fontsize=14, zorder=11)
-                plt.text(tx - 5, ty - 4, '+', fontsize=8, zorder=11)
+                plt.text(tx - 5, ty - 4, '+', fontsize=9, zorder=11)
             for item in textMinus:
                 tx, ty = item
-                plt.text(tx-3, ty-5, '-', fontsize=10, zorder=11)
+                plt.text(tx-3, ty-5, '-', fontsize=11, zorder=11)
                 #plt.text(tx - 3, ty - 5, '-', fontsize=18, zorder=11)
+            self.fig.set_size_inches(5.00,9.0)
         else:
             raise Exception('Array is empty!!')

@@ -93,7 +93,7 @@ class layoutParser:
         self.name = ""
         self.bundle = []
         self.array = []
-        self.xpitch = 21.65
+        self.xpitch = 22
         self.ypitch = 25
         self.dict_ = {}
 
