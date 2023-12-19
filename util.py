@@ -5,6 +5,10 @@ import matplotlib.patches as patch
 import csv
 from matplotlib.lines import Line2D
 from scipy.stats import weibull_min
+from matplotlib.figure import Figure
+import Repair_pb2
+import MicroBumpLayout_pb2
+from google.protobuf import text_format
 
 colorBoard = {-1: 'white',
               0: 'black',
@@ -79,6 +83,9 @@ class Line(object):
     def sef_line(self, left=None, right=None):
         self.link = (left, right)
 
+class Repair_group(object):
+    def __init__(self):
+        self.bumps = []
 
 class IArray:
     def __init__(self):
@@ -87,14 +94,17 @@ class IArray:
         self.ax = None
         self.length = 0
         self.idx = 0
-        self.bx = []
-        self.by = []
+        #self.bx = []
+        #self.by = []
         self.marray = None
-        self.adjacent = None
+        #self.adjacent = None
         self.ux = None
         self.uy = None
         self.anchorVector = None
-        self.larray = []
+        self.larray = None
+        self.protorepair = None
+        self.protomarray = None
+        self.repairgroup = None
 
         # I-Array parameters
         self.ArraySize = None
@@ -161,35 +171,28 @@ class IArray:
                              size=float(element[4]), bundle=int(element[5]), color=int(element[6]), type=int(element[7])))
             id+=1
 
-    def createCheckboard(self, n, m):
-        list_0_1 = np.array([[0, 1], [1, 0]])
-        checkerboard = np.tile(list_0_1, (n // 2, m // 2))
-        return checkerboard
+    def load_layout_from_proto(self, prototext):
+        if prototext:
+            self.bump.clear()
+            for idx, element in enumerate(prototext.MicroBump):
+                self.append(Bump(name=element.name, id=idx, row=element.row, col=element.col, x=element.x, y=element.y,
+                                 size=element.size, bundle=element.bundle, color=element.color, type=element.type))
+        else:
+            raise("Error! loading layout fault.")
 
-    def createHexMask(self, n, m):
-        # Create Hexagonal mask
-        checkerboard = self.createCheckboard(n+1, m+1)
-        mask = checkerboard[1:, 1:]
-        _mh, _mw = mask.shape
-        mask[_mh // 2, _mw // 2] = 0
-        mask[:, 0] = 0
-        mask[:, -1] = 0
-        mask[_mh // 2, 0] = 1
-        mask[_mh // 2, -1] = 1
-        #print(mask.shape)
-        return mask
 
-    def createRectMask(self, n, m):
-        # Create Rectangular mask
-        matrix = np.ones([n, m])
-        matrix[n // 2, m // 2] = 0
-        return matrix
+    #def load_repairs(self, filename):
+    #    with open(filename, "r") as f:
+    #        self.protorepair = text_format.Parse(f.read(), Repair_pb2.Arrays())
+    #    return self.protorepair
 
-    def conv2d(self, a, f):
-        s = f.shape + tuple(np.subtract(a.shape, f.shape) + 1)
-        strd = np.lib.stride_tricks.as_strided
-        subM = strd(a, shape=s, strides=a.strides * 2)
-        return np.einsum('ij,ijkl->kl', f, subM)
+    def construct_rmap(self):
+        if self.bump:
+            self.repairgroup = Repair_group()
+            for item in self.bump:
+                print(item.color)
+
+        return
 
     def createLine(self, bump1, bump2):
         #Ground-to-gound
@@ -298,16 +301,31 @@ class IArray:
                     if not self.check_is_line(bump, self.marray[tr - 2][tc - 1]):
                         self.larray.append(self.createLine(bump, self.marray[tr - 2][tc - 1]))
 
+    def clean_lmap(self):
+        if self.larray:
+            self.larray.clear()
+            self.larray = None
+
     def construct_lmap(self):
+        self.larray = []
         for bump in self:
             self.createLinesByBump(bump)
-        print("Total number of lines: ", len(self.larray))
+        print("Constructed lines: ", len(self.larray))
 
-    def drawing_all_lines(self):
-        # Drawing all lines:
-        for item in self.larray:
-            self.createDrawingLines(item)
-        print("Total number of lines: ", len(self.larray))
+    def dump_all_lines(self, filename):
+        return
+
+    def clean_imap(self):
+        if self.marray:
+            for row in self.marray:
+                 row.clear()
+            self.marray.clear()
+            self.marray = None
+        self.length = 0
+        self.idx = 0
+        self.ux = None
+        self.uy = None
+        self.anchorVector = None
 
     def construct_imap(self):
         if self.bump:
@@ -339,54 +357,6 @@ class IArray:
             return self.marray
         else:
             raise Exception('No interconnect to construct the array!!')
-
-    def neighborsRectMap(self):
-        # Retangular
-        arrayR = np.pad(np.ones(self.ArraySize), ((1, 1), (1, 1)), mode='constant', constant_values=(0, 0))
-        mask = self.createRectMask(3, 3)
-        outputR = self.conv2d(arrayR, mask)
-        return outputR
-
-    def neighborsHexaMap(self):
-        # Hexagonal
-        _mr, _mc = self.ArraySize
-        assayH = np.pad(np.ones([_mr*2, _mc]), ((3, 3), (2, 2)), mode='constant', constant_values=(0, 0))
-        mask = self.createHexMask(7, 5)
-        rst = self.conv2d(assayH, mask)
-        rr, rc = rst.shape
-        outputH = np.zeros([(rr+1)//2, rc])
-        for i in range(rc):
-            if i%2 == 0:
-                outputH[:, i] = rst[::2, i]
-            else:
-                outputH[:, i] = rst[1::2, i]
-        return outputH
-
-    def create_fig(self, xlim=12, ylim=12):
-        self.fig, self.ax = plt.subplots()
-        cid = self.fig.canvas.mpl_connect('button_press_event', self.mouseclicks)
-        self.fig.canvas.mpl_connect('key_press_event', self.on_press)
-        #self.ax.set_xlim(0, xlim)
-        #self.ax.set_ylim(0, ylim)
-
-    def set_XYRatio(self, ratio):
-        x_left, x_right = self.ax.get_xlim()
-        y_low, y_high = self.ax.get_ylim()
-        self.ax.set_aspect(abs((x_right - x_left) / (y_low - y_high)) * ratio)
-
-    def createDrawingLines(self, line):
-        basedLineWidth = 0.5
-        basedZOrder = 1.0
-        #Ground-to-gound
-        bump1, bump2 = line.link
-        line = Line2D([bump1.x, bump2.x],
-                      [bump1.y, bump2.y], color=line.color, linewidth=basedLineWidth+line.width, zorder=basedZOrder+line.level)
-        self.ax.add_line(line)
-
-    def cleanDrawingLines(self):
-        for item in self.ax.lines:
-            item.remove()
-            del item
 
     def cleanBumps(self):
         for item in self.ax.patches:
@@ -438,54 +408,3 @@ class IArray:
                 self.fig.canvas.draw()
                 self.fig.canvas.flush_events()
                 self.ax.autoscale_view()
-
-    def plot(self):
-        if self.bump:
-            x = []
-            y = []
-            textPlus = []
-            textMinus = []
-            for item in self:
-                xy = (item.x, item.y)
-                size = item.size
-                scaler = item.sizeScaler
-                type = bumpType[int(item.type)]
-                if type == 'Function':
-                    #edgecolor = colorBoard[item.bundle%15]
-                    #facecolor = colorBoard[item.color+1]
-                    edgecolor = 'black'
-                    facecolor = colorBoard[item.bundle%15]
-                elif type == 'Spare':
-                    edgecolor = 'black'
-                    facecolor = colorBoard[item.bundle%15]
-                    #edgecolor = colorBoard[item.bundle % 15]
-                    edgecolor = 'orange'
-                elif type == 'Vdd':
-                    edgecolor = 'red'
-                    facecolor = 'white'
-                    textPlus.append(xy)
-                elif type == 'Vss':
-                    edgecolor = 'black'
-                    facecolor = 'white'
-                    textMinus.append(xy)
-                else:
-                    edgecolor = colorBoard[-1]
-                    facecolor = colorBoard[-1]
-                #edgecolor = 'black'
-                #facecolor = 'white'
-                self.ax.add_patch(plt.Circle(xy=xy, radius=size*scaler*150.0,
-                                             edgecolor=edgecolor, facecolor=facecolor,
-                                             linewidth=1, zorder=10))
-                x.append(float(item.x))
-                y.append(float(item.y))
-            self.ax.scatter(x, y, s=0, marker='o')
-            for item in textPlus:
-                tx, ty = item
-                #plt.text(tx-5, ty-4, '+', fontsize=14, zorder=11)
-                plt.text(tx - 5, ty - 4, '+', fontsize=8, zorder=11)
-            for item in textMinus:
-                tx, ty = item
-                plt.text(tx-3, ty-5, '-', fontsize=10, zorder=11)
-                #plt.text(tx - 3, ty - 5, '-', fontsize=18, zorder=11)
-        else:
-            raise Exception('Array is empty!!')
