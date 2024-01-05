@@ -10,30 +10,6 @@ import Repair_pb2
 import MicroBumpLayout_pb2
 from google.protobuf import text_format
 
-colorBoard = {-1: 'white',
-              0: 'black',
-              1: 'royalblue',
-              2: 'red',
-              3: 'hotpink',
-              4: 'limegreen',
-              5: 'blue',
-              6: 'navy',
-              7: 'purple',
-              8: 'maroon',
-              9: 'yellow',
-              10: 'olive',
-              11: 'lightseagreen',
-              12: 'aquamarine',
-              13: 'rebeccapurple',
-              14: 'crimson'
-}
-
-bumpType = {0: 'Vss',
-            1: 'Vdd',
-            2: 'Function',
-            3: 'Spare'
-}
-
 # format: key: [groupIdx, color, lineLevels, lineWidth]
 shortType = {'None': [-1, 'white', 0, 0],
              'vss-vss': [0, 'chartreuse', 2, 1],
@@ -89,110 +65,49 @@ class Repair_group(object):
 
 class IArray:
     def __init__(self):
-        self.bump = []
-        self.fig = None
-        self.ax = None
-        self.length = 0
-        self.idx = 0
-        #self.bx = []
-        #self.by = []
-        self.marray = None
-        #self.adjacent = None
+        self.marray = []
+        self.larray = []
+        self.rarray = []
+        self.ArraySize = None
         self.ux = None
         self.uy = None
         self.anchorVector = None
-        self.larray = None
-        self.protorepair = None
         self.protomarray = None
+        self.protorepair = None
         self.repairgroup = None
+        self.rlist = []
 
-        # I-Array parameters
-        self.ArraySize = None
-        self.counting = []
-        self.bcounting = []
-        for i in range(7):
-            self.counting.append(0)
-            self.bcounting.append(0)
+    def construct_mmap(self):
+        if self.protomarray:
+            r = []
+            c = []
+            p = []
+            self.marray = []
+            for item in self.protomarray.MicroBump:
+                r.append(int(item.row))
+                c.append(int(item.col))
+                p.append((int(item.row), int(item.col)))
 
-        # Error calculation parameters
-        self.SingleShortErrorSum = []
-        self.SingleShortErrorRate = []
-        for i in range(7):
-            self.SingleShortErrorSum.append(0)
-            self.SingleShortErrorRate.append(0)
+            mr, mc = max(r)+1, max(c)+1
+            self.ArraySize = (mr, mc)
 
-        self.SingleOpenErrorSum = []
-        self.SingleOpenErrorRate = []
-        for i in range(3):
-            self.SingleOpenErrorSum.append(0)
-            self.SingleOpenErrorRate.append(0)
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        self.idx += 1
-        if self.idx > self.length:
-            self.idx = 0
-            raise StopIteration
+            for i in range(mr):
+                tmp = []
+                self.marray.append(tmp)
+                for j in range(mc):
+                    indices = [index for index, item in enumerate(p) if item == (i, j)]
+                    if len(indices) == 0:
+                        self.marray[i].append(None)
+                    else:
+                        self.marray[i].append(self.protomarray.MicroBump[indices[0]])
+            self.ux = abs(self.marray[0][1].x-self.marray[0][0].x)
+            self.uy = abs(self.marray[1][0].y-self.marray[0][0].y)
+            self.anchorVector = ((self.marray[0][1].x-self.marray[0][0].x), (self.marray[0][1].y-self.marray[0][0].y))
         else:
-            return self.bump[self.idx-1]
+            raise Exception("Constructing mmap fail...")
 
-    def __getitem__(self, idx=-1):
-        if idx < 0 & idx > self.length:
-            raise IndexError("list index out of range")
-            return None
-        else:
-            return self.bump[idx].__getitem__()
-
-    def __len__(self):
-        if self.length != len(self.bump):
-            raise Exception('Length Error!!!')
-        else:
-            return self.length
-
-    def append(self, bump):
-        self.bump.append(bump)
-        self.length = len(self.bump)
-
-    def clean_list(self):
-        self.bump.clear()
-        self.length = 0
-        self.idx = 0
-
-    def read_csv(self, filename):
-        self.clean_list()
-        file = open(filename, "r")
-        data = list(csv.reader(file, delimiter=","))
-        title = data.pop(0)
-        id = 0
-        for element in data:
-            self.append(Bump(name='', id=id, row=int(element[0]), col=int(element[1]), x=float(element[2]), y=float(element[3]),
-                             size=float(element[4]), bundle=int(element[5]), color=int(element[6]), type=int(element[7])))
-            id+=1
-
-    def load_layout_from_proto(self, prototext):
-        if prototext:
-            self.bump.clear()
-            for idx, element in enumerate(prototext.MicroBump):
-                self.append(Bump(name=element.name, id=idx, row=element.row, col=element.col, x=element.x, y=element.y,
-                                 size=element.size, bundle=element.bundle, color=element.color, type=element.type))
-        else:
-            raise("Error! loading layout fault.")
-
-
-    #def load_repairs(self, filename):
-    #    with open(filename, "r") as f:
-    #        self.protorepair = text_format.Parse(f.read(), Repair_pb2.Arrays())
-    #    return self.protorepair
-
-    def construct_rmap(self):
-        if self.bump:
-            self.repairgroup = Repair_group()
-            for item in self.bump:
-                print(item.color)
-
-        return
+    def clean_mmap(self):
+        self.marray.clear()
 
     def createLine(self, bump1, bump2):
         #Ground-to-gound
@@ -226,7 +141,7 @@ class IArray:
 
     def createLinesByBump(self, bump):
         if bump != None:
-            tr, tc = bump.row, bump.col
+            tr, tc = int(bump.row), int(bump.col)
             mr, mc = self.ArraySize
             ax, ay = self.anchorVector
             # Upper line
@@ -302,109 +217,59 @@ class IArray:
                         self.larray.append(self.createLine(bump, self.marray[tr - 2][tc - 1]))
 
     def clean_lmap(self):
-        if self.larray:
-            self.larray.clear()
-            self.larray = None
+        self.larray.clear()
 
     def construct_lmap(self):
-        self.larray = []
-        for bump in self:
+        for bump in self.protomarray.MicroBump:
             self.createLinesByBump(bump)
         print("Constructed lines: ", len(self.larray))
 
     def dump_all_lines(self, filename):
         return
 
-    def clean_imap(self):
-        if self.marray:
-            for row in self.marray:
-                 row.clear()
-            self.marray.clear()
-            self.marray = None
-        self.length = 0
-        self.idx = 0
-        self.ux = None
-        self.uy = None
-        self.anchorVector = None
-
-    def construct_imap(self):
-        if self.bump:
-            r = []
-            c = []
-            p = []
-            self.marray = []
-            for item in self:
-                r.append(int(item.row))
-                c.append(int(item.col))
-                p.append((int(item.row), int(item.col)))
-
-            mr, mc = max(r)+1, max(c)+1
-            self.ArraySize = (mr, mc)
-            #print("self.ArraySize:", self.ArraySize)
-
-            for i in range(mr):
-                tmp = []
-                self.marray.append(tmp)
-                for j in range(mc):
-                    indices = [index for index, item in enumerate(p) if item == (i, j)]
-                    if len(indices) == 0:
-                        self.marray[i].append(None)
-                    else:
-                        self.marray[i].append(self.bump[indices[0]])
-            self.ux = abs(self.marray[0][1].x-self.marray[0][0].x)
-            self.uy = abs(self.marray[1][0].y-self.marray[0][0].y)
-            self.anchorVector = ((self.marray[0][1].x-self.marray[0][0].x), (self.marray[0][1].y-self.marray[0][0].y))
-            return self.marray
+    def construct_rmap(self):
+        if self.protomarray:
+            if self.repairgroup:
+                del self.repairgroup
+            self.repairgroup = Repair_group()
+            self.rarray.clear()
+            self.rlist.clear()
+            for group in self.protorepair.RepairGroup:
+                repairroutes = []
+                if len(group.Route) != group.RouteCount:
+                    raise Exception("Constructing rmap fail ... Description file does not match.")
+                for route in group.Route:
+                    fromBump = self.search_Bump_by_name( str(route.From) )
+                    toBump = self.search_Bump_by_name( str(route.To) )
+                    if len(fromBump) != 1 or len(toBump) != 1:
+                        print("Cannot find bumps by name. From: "+str(route.From)+", To: "+str(route.To))
+                        continue
+                    repairroutes.append([fromBump[0], toBump[0]])
+                if len(repairroutes) != group.RouteCount:
+                    raise Exception("Constructing rmap fail ...")
+                bumplist = []
+                for phy in group.Phy:
+                    bump = self.search_Bump_by_name( str(phy) )
+                    if len(bump) != 1:
+                        print("Cannot find bumps by name. Phy: "+str(phy))
+                        continue
+                    bumplist.append(bump[0])
+                for spare in group.Spare:
+                    bump = self.search_Bump_by_name(str(spare))
+                    if len(bump) != 1:
+                        print("Cannot find bumps by name. Phy: "+str(spare))
+                        continue
+                    bumplist.append(bump[0])
+                self.rarray.append(repairroutes)
+                self.rlist.append(bumplist)
+            #print("repair groups: ", len(self.rarray))
         else:
-            raise Exception('No interconnect to construct the array!!')
+            raise Exception("Constructing rmap fail ...")
 
-    def cleanBumps(self):
-        for item in self.ax.patches:
-            item.remove()
-            del item
-
-    def on_press(self, event):
-        print('press', event.key)
-        if event.key == 'd':
-            self.cleanDrawingLines()
-        elif event.key == 'a':
-            self.drawing_all_lines()
-        elif event.key == '+' or event.key == '-':
-            for item in self:
-                if event.key == '+':
-                    item.sizeScaler += 0.04
-                else:
-                    item.sizeScaler -= 0.04
-            self.cleanBumps()
-            self.plot()
-        elif event.key == 'r':
-            for item in self:
-                item.sizeScaler = 1.0
-            self.cleanDrawingLines()
-            self.cleanBumps()
-            self.plot()
-        self.fig.canvas.draw()
-        self.fig.canvas.flush_events()
-        self.ax.autoscale_view()
-
-    def mouseclicks(self, event):
-        if event.dblclick:
-            tc = ((event.xdata + self.ux / 2) // self.ux).astype(int)
-            ax, ay = self.anchorVector
-            mr, mc = self.ArraySize
-            yoffset = 0
-            if ay < 0 and (tc % 2) == 0:
-                yoffset = self.uy / 2
-            elif ay > 0 and (tc % 2) == 1:
-                yoffset = self.uy / 2
-            else:
-                yoffset = 0
-            tr = ((event.ydata + self.uy / 2 - yoffset) // self.uy).astype(int)
-            print("row: %d, col: %d" % (tr, tc))
-            if tr >= 0 and tr < mr and tc >= 0 and tc < mc:
-                linelist = self.search_Lines_by_Bump(self.marray[tr][tc])
-                for line in linelist:
-                   self.createDrawingLines(line)
-                self.fig.canvas.draw()
-                self.fig.canvas.flush_events()
-                self.ax.autoscale_view()
+    def search_Bump_by_name(self, name):
+        return [item for i, item in enumerate(self.protomarray.MicroBump) if item.name == name]
+    def clean_rmap(self):
+        if self.repairgroup:
+            del self.repairgroup
+            self.repairgroup = None
+        self.rarray.clear()
