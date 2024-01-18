@@ -17,7 +17,7 @@ shortType = {'None': [-1, 'white', 0, 0],
              'vdd-vss': [2, 'red', 5, 2],
              'vss-signal': [3, 'fuchsia', 0, 0],
              'vdd-signal': [4, 'fuchsia', 0, 0],
-             'inter-bundle-signal-signal': [5, 'black', 0, 0],
+             'inter-bundle-signal-signal': [5, 'red', 0, 0],
              'intra-bundle-signal-signal': [6, 'black', 0, 0],
 }
 
@@ -74,8 +74,13 @@ class IArray:
         self.anchorVector = None
         self.protomarray = None
         self.protorepair = None
-        self.repairgroup = None
         self.rlist = []
+        self.ax = None
+        self.faultyText = []
+        self.sigText = []
+        self.phybumpText = []
+        self.phy2Fn = []
+        self.faulty_bump = []
 
     def construct_mmap(self):
         if self.protomarray:
@@ -227,11 +232,9 @@ class IArray:
     def dump_all_lines(self, filename):
         return
 
-    def construct_rmap(self):
+    '''
+    def construct_rmap_v3(self):
         if self.protomarray:
-            if self.repairgroup:
-                del self.repairgroup
-            self.repairgroup = Repair_group()
             self.rarray.clear()
             self.rlist.clear()
             for group in self.protorepair.RepairGroup:
@@ -265,11 +268,55 @@ class IArray:
             #print("repair groups: ", len(self.rarray))
         else:
             raise Exception("Constructing rmap fail ...")
+    '''
+    def contruct_bmap_vEJ(self):
+        if self.protomarray and self.protorepair:
+            for fnintrnt in self.protorepair.FnInterconnects:
+                phylane = self.search_Bump_by_name(fnintrnt.PhyInterconnect.TX) + self.search_Bump_by_name(signal.default.From)
+                if len(phylane) != 1:
+                    print("Cannot find bumps by name. Phy: " + str(phylane))
+                    continue
+    def construct_rmap_vEJ(self):
+        if self.protomarray and self.protorepair:
+            for group in self.protorepair.Repairgroup:
+                for logics in [group.TXRepairLogic, group.RXRepairLogic]:
+                    for logic in logics:
+                        for signal in logic.signal:
+                            #fnsignal = MicroBumpLayout_pb2.Fnsignals()
+                            #fnsignal.name = signal.port
+                            #for control in signal.default.control:
+                            #    fncntrl = fnsignal.cntrls()
+                            #    fncntrl.mux = control.adapter
+                            #    fncntrl.sel = control.Sel
+                            #    fnsignal.mode.append(fncntrl)
+                            phylane = self.search_Bump_by_name(signal.default.To) + self.search_Bump_by_name(signal.default.From)
+                            if len(phylane) != 1:
+                                print("Cannot find bumps by name. Phy: " + str(phylane))
+                                continue
+                            #phylane[0].current.append(fnsignal)
+                            phylane[0].signal.append(signal)
+                            #for repair in signal.repair:
+                            #    fnsignal = MicroBumpLayout_pb2.Fnsignals()
+                            #    fnsignal.name = signal.port
+                            #    for control in repair.control:
+                            #        fncntrl = fnsignal.cntrls()
+                            #        fncntrl.mux = control.adapter
+                            #        fncntrl.sel = control.Sel
+                            #        fnsignal.mode.append(fncntrl)
+                            #    phylane = self.search_Bump_by_name(repair.To) + self.search_Bump_by_name(repair.From)
+                            #    if len(phylane) != 1:
+                            #        print("Cannot find bumps by name. Phy: " + str(phylane))
+                            #        continue
+                            #    phylane[0].repair.append(fnsignal)
+            #print(self.protomarray)
+        else:
+            raise Exception("Constructing rmap fail ...")
 
     def search_Bump_by_name(self, name):
         return [item for i, item in enumerate(self.protomarray.MicroBump) if item.name == name]
-    def clean_rmap(self):
-        if self.repairgroup:
-            del self.repairgroup
-            self.repairgroup = None
-        self.rarray.clear()
+    def clean_rmap_vEJ(self):
+        for bump in self.protomarray.MicroBump:
+            while bump.current:
+                bump.current.pop()
+            while bump.repair:
+                bump.repair.pop()

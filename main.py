@@ -1,4 +1,3 @@
-from util import *
 from LayoutParser import *
 from plotfigure import *
 
@@ -14,9 +13,9 @@ if __name__ == "__main__":
     ref.append(UCIeLayout)
 
     app = App()
-    addr = app.set_array(ref)
-    if addr != id(UCIeLayout):
-        raise("Reference fault!")
+    #addr = app.set_array(ref)
+    #if addr != id(UCIeLayout):
+    #    raise("Reference fault!")
     #app.graph(app.array.protomarray)
     app.mainloop()
 

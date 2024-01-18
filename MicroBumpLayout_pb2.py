@@ -11,19 +11,29 @@ from google.protobuf.internal import builder as _builder
 _sym_db = _symbol_database.Default()
 
 
+import Repair_pb2 as Repair_dot_vEJ__pb2
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15MicroBumpLayout.proto\"\xd4\x01\n\nMicroBumps\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\x0b\n\x03row\x18\x02 \x01(\x05\x12\x0b\n\x03\x63ol\x18\x03 \x01(\x05\x12\x0e\n\x01x\x18\x04 \x01(\x02H\x00\x88\x01\x01\x12\x0e\n\x01y\x18\x05 \x01(\x02H\x01\x88\x01\x01\x12\x11\n\x04size\x18\x06 \x01(\x02H\x02\x88\x01\x01\x12\x13\n\x06\x62undle\x18\x07 \x01(\rH\x03\x88\x01\x01\x12\x12\n\x05\x63olor\x18\x08 \x01(\rH\x04\x88\x01\x01\x12\x18\n\x04type\x18\t \x01(\x0e\x32\n.BumpTypesB\x04\n\x02_xB\x04\n\x02_yB\x07\n\x05_sizeB\t\n\x07_bundleB\x08\n\x06_color\"I\n\x0fMicroBumpArrays\x12\x16\n\x0eMicroBumpCount\x18\x01 \x01(\x05\x12\x1e\n\tMicroBump\x18\x02 \x03(\x0b\x32\x0b.MicroBumps*6\n\tBumpTypes\x12\x07\n\x03VSS\x10\x00\x12\x07\n\x03VDD\x10\x01\x12\x0c\n\x08\x46unction\x10\x02\x12\t\n\x05Spare\x10\x03\x62\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x15MicroBumpLayout.proto\x12\x06import\x1a\x10Repair.vEJ.proto\"e\n\tFnsignals\x12\x0c\n\x04name\x18\x01 \x01(\t\x12&\n\x04mode\x18\x02 \x03(\x0b\x32\x18.import.Fnsignals.cntrls\x1a\"\n\x06\x63ntrls\x12\x0b\n\x03mux\x18\x01 \x01(\t\x12\x0b\n\x03sel\x18\x02 \x01(\r\"\xe2\x03\n\nMicroBumps\x12\n\n\x02id\x18\x01 \x01(\r\x12\x0c\n\x04name\x18\x02 \x01(\t\x12\x0b\n\x03row\x18\x03 \x01(\x05\x12\x0b\n\x03\x63ol\x18\x04 \x01(\x05\x12\x0e\n\x01x\x18\x05 \x01(\x02H\x00\x88\x01\x01\x12\x0e\n\x01y\x18\x06 \x01(\x02H\x01\x88\x01\x01\x12\x11\n\x04size\x18\x07 \x01(\x02H\x02\x88\x01\x01\x12\x13\n\x06\x62undle\x18\x08 \x01(\rH\x03\x88\x01\x01\x12\x16\n\tphybundle\x18\t \x01(\rH\x04\x88\x01\x01\x12\x12\n\x05\x63olor\x18\n \x01(\rH\x05\x88\x01\x01\x12\x1f\n\x04type\x18\x0b \x01(\x0e\x32\x11.import.BumpTypes\x12&\n\tdirection\x18\x0c \x01(\x0e\x32\x13.import.IODirection\x12\"\n\x07\x63urrent\x18\r \x03(\x0b\x32\x11.import.Fnsignals\x12!\n\x06repair\x18\x0e \x03(\x0b\x32\x11.import.Fnsignals\x12\x18\n\x06signal\x18\x0f \x03(\x0b\x32\x08.Signals\x12\x13\n\x06\x66\x61ulty\x18\x10 \x01(\x08H\x06\x88\x01\x01\x12\x19\n\x0c\x63ontactgroup\x18\x11 \x01(\rH\x07\x88\x01\x01\x42\x04\n\x02_xB\x04\n\x02_yB\x07\n\x05_sizeB\t\n\x07_bundleB\x0c\n\n_phybundleB\x08\n\x06_colorB\t\n\x07_faultyB\x0f\n\r_contactgroup\"P\n\x0fMicroBumpArrays\x12\x16\n\x0eMicroBumpCount\x18\x01 \x01(\x05\x12%\n\tMicroBump\x18\x02 \x03(\x0b\x32\x12.import.MicroBumps\":\n\x07Layouts\x12/\n\x0eMicroBumpArray\x18\x01 \x03(\x0b\x32\x17.import.MicroBumpArrays*6\n\tBumpTypes\x12\x07\n\x03VSS\x10\x00\x12\x07\n\x03VDD\x10\x01\x12\x0c\n\x08\x46unction\x10\x02\x12\t\n\x05Spare\x10\x03*7\n\x0bIODirection\x12\t\n\x05Input\x10\x00\x12\n\n\x06Output\x10\x01\x12\x11\n\rBidirectional\x10\x02\x42\x17Z\x15protobuf/import;protob\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
 _builder.BuildTopDescriptorsAndMessages(DESCRIPTOR, 'MicroBumpLayout_pb2', _globals)
 if _descriptor._USE_C_DESCRIPTORS == False:
-  DESCRIPTOR._options = None
-  _globals['_BUMPTYPES']._serialized_start=315
-  _globals['_BUMPTYPES']._serialized_end=369
-  _globals['_MICROBUMPS']._serialized_start=26
-  _globals['_MICROBUMPS']._serialized_end=238
-  _globals['_MICROBUMPARRAYS']._serialized_start=240
-  _globals['_MICROBUMPARRAYS']._serialized_end=313
+  _globals['DESCRIPTOR']._options = None
+  _globals['DESCRIPTOR']._serialized_options = b'Z\025protobuf/import;proto'
+  _globals['_BUMPTYPES']._serialized_start=781
+  _globals['_BUMPTYPES']._serialized_end=835
+  _globals['_IODIRECTION']._serialized_start=837
+  _globals['_IODIRECTION']._serialized_end=892
+  _globals['_FNSIGNALS']._serialized_start=51
+  _globals['_FNSIGNALS']._serialized_end=152
+  _globals['_FNSIGNALS_CNTRLS']._serialized_start=118
+  _globals['_FNSIGNALS_CNTRLS']._serialized_end=152
+  _globals['_MICROBUMPS']._serialized_start=155
+  _globals['_MICROBUMPS']._serialized_end=637
+  _globals['_MICROBUMPARRAYS']._serialized_start=639
+  _globals['_MICROBUMPARRAYS']._serialized_end=719
+  _globals['_LAYOUTS']._serialized_start=721
+  _globals['_LAYOUTS']._serialized_end=779
 # @@protoc_insertion_point(module_scope)

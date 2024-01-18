@@ -1,0 +1,441 @@
+Array {
+	Repairgroup {
+		TXRepairLogic {
+			FnSignalCount: 4
+			PhySignalCount: 6
+			signal {
+				port: "mybus0"
+				default {
+					To: "txdata0"
+					control {
+						adapter: "txmux[0]"
+						Sel: m2
+					}
+				}
+				repair {
+					To: "txdataRD0"
+					control {
+						adapter: "txmux[0]"
+						Sel: mX
+					}
+				}
+				repair {
+					To: "txdata1"
+					control {
+						adapter: "txmux[1]"
+						Sel: m1
+					}
+				}
+			}
+			signal {
+				port: "mybus1"
+				default {
+					To: "txdata1"
+					control {
+						adapter: "txmux[1]"
+						Sel: m2
+					}
+				}
+				repair {
+					To: "txdata0"
+					control {
+						adapter: "txmux[1]"
+						Sel: mX
+					}
+					control {
+						adapter: "txmux[0]"
+						Sel: m1
+					}
+				}
+				repair {
+					To: "txdata2"
+					control {
+						adapter: "txmux[1]"
+						Sel: mX
+					}
+					control {
+						adapter: "txmux[2]"
+						Sel: m1
+					}
+				}
+			}
+			signal {
+				port: "mybus2"
+				default {
+					To: "txdata2"
+					control {
+						adapter: "txmux[2]"
+						Sel: m2
+					}
+				}
+				repair {
+					To: "txdata1"
+					control {
+						adapter: "txmux[2]"
+						Sel: mX
+					}
+					control {
+						adapter: "txmux[1]"
+						Sel: m3
+					}
+				}
+				repair {
+					To: "txdata3"
+					control {
+						adapter: "txmux[2]"
+						Sel: mX
+					}
+					control {
+						adapter: "txmux[3]"
+						Sel: m1
+					}
+				}
+			}
+			signal {
+				port: "mybus3"
+				default {
+					To: "txdata3"
+					control {
+						adapter: "txmux[3]"
+						Sel: m2
+					}
+				}
+				repair {
+					To: "txdata2"
+					control {
+						adapter: "txmux[2]"
+						Sel: m3
+					}
+				}
+				repair {
+					To: "txdataRD1"
+					control {
+						adapter: "txmux[3]"
+						Sel: mX
+					}
+				}
+			}
+		}
+		RXRepairLogic {
+			FnSignalCount: 4
+			PhySignalCount: 6
+			signal {
+				port: "yourbus0"
+				default {
+					From: "rxdata0"
+					control {
+						adapter: "rxmux[0]"
+						Sel: m2
+					}
+				}
+				repair {
+					From: "rxdataRD0"
+					control {
+						adapter: "rxmux[0]"
+						Sel: m1
+					}
+				}
+				repair {
+					From: "rxdata1"
+					control {
+						adapter: "rxmux[0]"
+						Sel: m3
+					}
+				}
+			}
+			signal {
+				port: "yourbus1"
+				default {
+					From: "rxdata1"
+					control {
+						adapter: "rxmux[1]"
+						Sel: m2
+					}
+				}
+				repair {
+					From: "rxdata0"
+					control {
+						adapter: "rxmux[1]"
+						Sel: m1
+					}
+				}
+				repair {
+					From: "rxdata2"
+					control {
+						adapter: "rxmux[1]"
+						Sel: m3
+					}
+				}
+			}
+			signal {
+				port: "yourbus2"
+				default {
+					From: "rxdata2"
+					control {
+						adapter: "rxmux[2]"
+						Sel: m2
+					}
+				}
+				repair {
+					From: "rxdata1"
+					control {
+						adapter: "rxmux[2]"
+						Sel: m1
+					}
+				}
+				repair {
+					From: "rxdata3"
+					control {
+						adapter: "rxmux[2]"
+						Sel: m3
+					}
+				}
+			}
+			signal {
+				port: "yourbus3"
+				default {
+					From: "rxdata3"
+					control {
+						adapter: "rxmux[2]"
+						Sel: m2
+					}
+				}
+				repair {
+					From: "rxdata2"
+					control {
+						adapter: "rxmux[2]"
+						Sel: m1
+					}
+				}
+				repair {
+					From: "rxdataRD1"
+					control {
+						adapter: "rxmux[2]"
+						Sel: m3
+					}
+				}
+			}
+		}
+	}	
+}
+Array {
+	Repairgroup {
+		TXRepairLogic {
+			FnSignalCount: 4
+			PhySignalCount: 6
+			signal {
+				port: "yourbus0"
+				default {
+					To: "txdata0"
+					control {
+						adapter: "txmux[0]"
+						Sel: m2
+					}
+				}
+				repair {
+					To: "txdataRD0"
+					control {
+						adapter: "txmux[0]"
+						Sel: mX
+					}
+				}
+				repair {
+					To: "txdata1"
+					control {
+						adapter: "txmux[1]"
+						Sel: m1
+					}
+				}
+			}
+			signal {
+				port: "yourbus1"
+				default {
+					To: "txdata1"
+					control {
+						adapter: "txmux[1]"
+						Sel: m2
+					}
+				}
+				repair {
+					To: "txdata0"
+					control {
+						adapter: "txmux[1]"
+						Sel: mX
+					}
+					control {
+						adapter: "txmux[0]"
+						Sel: m1
+					}
+				}
+				repair {
+					To: "txdata2"
+					control {
+						adapter: "txmux[1]"
+						Sel: mX
+					}
+					control {
+						adapter: "txmux[2]"
+						Sel: m1
+					}
+				}
+			}
+			signal {
+				port: "yourbus2"
+				default {
+					To: "txdata2"
+					control {
+						adapter: "txmux[2]"
+						Sel: m2
+					}
+				}
+				repair {
+					To: "txdata1"
+					control {
+						adapter: "txmux[2]"
+						Sel: mX
+					}
+					control {
+						adapter: "txmux[1]"
+						Sel: m3
+					}
+				}
+				repair {
+					To: "txdata3"
+					control {
+						adapter: "txmux[2]"
+						Sel: mX
+					}
+					control {
+						adapter: "txmux[3]"
+						Sel: m1
+					}
+				}
+			}
+			signal {
+				port: "yourbus3"
+				default {
+					To: "txdata3"
+					control {
+						adapter: "txmux[3]"
+						Sel: m2
+					}
+				}
+				repair {
+					To: "txdata2"
+					control {
+						adapter: "txmux[2]"
+						Sel: m3
+					}
+				}
+				repair {
+					To: "txdataRD1"
+					control {
+						adapter: "txmux[3]"
+						Sel: mX
+					}
+				}
+			}
+		}
+		RXRepairLogic {
+			FnSignalCount: 4
+			PhySignalCount: 6
+			signal {
+				port: "mybus0"
+				default {
+					From: "rxdata0"
+					control {
+						adapter: "rxmux[0]"
+						Sel: m2
+					}
+				}
+				repair {
+					From: "rxdataRD0"
+					control {
+						adapter: "rxmux[0]"
+						Sel: m1
+					}
+				}
+				repair {
+					From: "rxdata1"
+					control {
+						adapter: "rxmux[0]"
+						Sel: m3
+					}
+				}
+			}
+			signal {
+				port: "mybus1"
+				default {
+					From: "rxdata1"
+					control {
+						adapter: "rxmux[1]"
+						Sel: m2
+					}
+				}
+				repair {
+					From: "rxdata0"
+					control {
+						adapter: "rxmux[1]"
+						Sel: m1
+					}
+				}
+				repair {
+					From: "rxdata2"
+					control {
+						adapter: "rxmux[1]"
+						Sel: m3
+					}
+				}
+			}
+			signal {
+				port: "mybus2"
+				default {
+					From: "rxdata2"
+					control {
+						adapter: "rxmux[2]"
+						Sel: m2
+					}
+				}
+				repair {
+					From: "rxdata1"
+					control {
+						adapter: "rxmux[2]"
+						Sel: m1
+					}
+				}
+				repair {
+					From: "rxdata3"
+					control {
+						adapter: "rxmux[2]"
+						Sel: m3
+					}
+				}
+			}
+			signal {
+				port: "mybus3"
+				default {
+					From: "rxdata3"
+					control {
+						adapter: "rxmux[2]"
+						Sel: m2
+					}
+				}
+				repair {
+					From: "rxdata2"
+					control {
+						adapter: "rxmux[2]"
+						Sel: m1
+					}
+				}
+				repair {
+					From: "rxdataRD1"
+					control {
+						adapter: "rxmux[2]"
+						Sel: m3
+					}
+				}
+			}
+		}
+	}	
+}
+
