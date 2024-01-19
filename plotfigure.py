@@ -128,7 +128,7 @@ class App(tk.Tk):
         # create textbox
         self.frm_textbox = tk.Frame(self)
         self.frm_textbox.pack(side=tk.BOTTOM, fill='x', expand=False) #item4
-        self.textbox = tk.Text(self.frm_textbox, height=5)
+        self.textbox = tk.Text(self.frm_textbox, height=10)
         self.textbox.grid(row=0, column=0, sticky="nsew")
 
         # create toolbars frame
@@ -393,41 +393,57 @@ class App(tk.Tk):
                     del item
 
     def createDrawingArrows(self, route, array=None, color='black'):
-        if route not in self.drawn_routes:
+        if route not in array.drawn_routes:
             From, To = route
             #rad = 0.27+len(self.drawnRepairGroup)*0.03
             rad = 0.33
             arpr = {"arrowstyle": "->", "connectionstyle": "arc3, rad="+str(rad), "color":str(color)}
-            self.arrows.append(array.ax.annotate("", xy=(To.x, To.y), xytext=(From.x, From.y), arrowprops=arpr, zorder=11))
+            array.arrows.append(array.ax.annotate("", xy=(To.x, To.y), xytext=(From.x, From.y), arrowprops=arpr, zorder=11))
             self.flush_fig()
-            self.drawn_routes.append(route)
+            array.drawn_routes.append(route)
 
     def make_a_route(self, route, array=None):
-        if route not in self.routes:
+        if route not in array.routes:
             From, To, signal = route
             self.createDrawingArrows((From, To), array, 'gray')
-            self.routes.append(route)
+            array.routes.append(route)
             From.signal.remove(signal)
             To.signal.append(signal)
             self.update_mode_bottoms(array, To)
             self.show_signals()
 
-    def resume_routes(self):
-        return
+    def resume_a_route(self, route, array=None):
+        if route in array.routes:
+            From, To, signal = route
+            if (From, To) in array.drawn_routes:
+                idx = array.drawn_routes.index((From, To))
+                array.drawn_routes.remove((From, To))
+                print(idx)
+                ar = array.arrows[idx]
+                del array.arrows[idx]
+                ar.remove()
+                array.routes.remove(route)
+
+                To.signal.remove(signal)
+                From.signal.append(signal)
+                self.update_mode_bottoms(array, From)
+                self.show_signals()
 
     def cleanDrawingArrows(self):
-        while self.arrows:
-            ar = self.arrows.pop()
-            ar.remove()
-            del ar
-        self.drawn_routes.clear()
-        self.drawnRepairGroup.clear()
+        for array in self.dies:
+            while array.arrows:
+                ar = array.arrows.pop()
+                ar.remove()
+                del ar
+            array.drawn_routes.clear()
+            #array.drawnRepairGroup.clear()
         self.flush_fig()
 
     def on_press(self, event):
         print('press', event.key)
         if event.key == 'd':
             self.press_cleanlines()
+            self.press_cleanarrows()
             self.clean_all_SigText()
         elif event.key == 'a':
             self.press_drawlines()
@@ -537,7 +553,10 @@ class App(tk.Tk):
             if selected_bump.signal:
                 temp = [sig.port for sig in selected_bump.signal if sig.default.To and sig.default.To != selected_bump.name] + [sig.port for sig in selected_bump.signal if sig.default.From and sig.default.From != selected_bump.name]
                 for name in temp:
-                    self.new_mode_btn(self.resume_routes, 'Resume '+str(name))
+                    for route in array.routes:
+                        _, _, sig = route
+                        if sig.port == name:
+                            self.new_mode_btn(self.resume_a_route, 'Resume '+str(name), (route, array))
 
     def create_stacked_mapping(self):
         for idx, array in enumerate(self.dies):

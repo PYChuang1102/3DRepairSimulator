@@ -81,6 +81,9 @@ class IArray:
         self.phybumpText = []
         self.phy2Fn = []
         self.faulty_bump = []
+        self.drawn_routes = []
+        self.arrows = []
+        self.routes = []
 
     def construct_mmap(self):
         if self.protomarray:
