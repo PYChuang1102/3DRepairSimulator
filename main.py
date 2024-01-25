@@ -8,7 +8,7 @@ grid_ratio = 1
 if __name__ == "__main__":
     UCIeLayout = IArray()
     dir = os.getcwd() + "\\.\\data\\"
-    layoutfilename = "\\UCIePitch51-55.csv"
+    layoutfilename = "\\UCIePitch38-50.csv"
     listfilename = "\\test.csv"
 
     # Parse layout form to a list form

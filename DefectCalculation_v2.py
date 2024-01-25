@@ -152,6 +152,7 @@ class FaultBumpsList:
                     for short_bumps, short_lines in zip(short_bumps_list, short_lines_list):
                         if bump not in short_bumps:
                             fault_bumps_list.append([short_lines, short_bumps, [bump]])
+                            
 
         elif fault_type=='2open' or fault_type=='1short2open':
             if len(short_lines_list) == 0:

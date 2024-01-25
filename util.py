@@ -470,6 +470,8 @@ class IArray:
     def drawing_all_lines(self):
         # Drawing all lines:
         for item in self.larray:
+            # for drawing specific colored line, I add the if condition
+            # if item.color=='red' or item.color=='chartreuse':
             self.createDrawingLines(item)
         print("Total number of lines: ", len(self.larray))
 
@@ -544,7 +546,7 @@ class IArray:
         #Ground-to-gound
         bump1, bump2 = line.link
         line = Line2D([bump1.x, bump2.x],
-                      [bump1.y, bump2.y], color=line.color, linewidth=basedLineWidth+line.width, zorder=basedZOrder+line.level)
+                      [bump1.y, bump2.y], color='black', linewidth=basedLineWidth+0, zorder=basedZOrder+line.level)
         self.ax.add_line(line)
 
     def cleanDrawingLines(self):
@@ -636,7 +638,7 @@ class IArray:
                     #                             linewidth=linewidth, zorder=10))
                     self.ax.add_patch(plt.Polygon([[item.x-size * scaler * 150.0, item.y-size * scaler * 150.0],[item.x+size * scaler * 150.0, item.y-size * scaler * 150.0],[item.x, item.y+size * scaler * 150.0]],
                                                     edgecolor=edgecolor, facecolor=facecolor,
-                                                    linewidth=linewidth, zorder=10))
+                                                   linewidth=linewidth, zorder=10))
 
                 else:
                     if type == 'Function':
@@ -661,6 +663,7 @@ class IArray:
                         facecolor = colorBoard[-1]
                     #edgecolor = 'black'
                     #facecolor = 'white'
+                    #if type =='Vss' or type=='Vdd':
                     self.ax.add_patch(plt.Circle(xy=xy, radius=size*scaler*150.0,
                                                  edgecolor=edgecolor, facecolor=facecolor,
                                                  linewidth=linewidth, zorder=10))
@@ -671,7 +674,7 @@ class IArray:
                 y.append(float(item.y))
             self.ax.scatter(x, y, s=0, marker='o')
             fmt_x = ticker.FuncFormatter(lambda x, _: int(x / 22))
-            fmt_y = ticker.FuncFormatter(lambda y, _: int(y / 25 *2))
+            fmt_y = ticker.FuncFormatter(lambda y, _: int(y / 25 *2/2))
             self.ax.xaxis.set_major_formatter(fmt_x)
             self.ax.yaxis.set_major_formatter(fmt_y)
             self.ax.xaxis.set_tick_params(labelsize=10*0.8)
