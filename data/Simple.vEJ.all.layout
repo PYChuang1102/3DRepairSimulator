@@ -8,7 +8,7 @@ MicroBumpArray {
 	  x: 0.0
 	  y: 0.0
 	  size: 0.05
-	  direction: 0
+	  direction: 2
 	  type: VSS
 	  faulty: True
 	}
@@ -20,7 +20,7 @@ MicroBumpArray {
 	  x: 0.0
 	  y: 25.0
 	  size: 0.05
-	  direction: 0
+	  direction: 1
 	  type: Function
 	}
 	MicroBump {
@@ -31,7 +31,7 @@ MicroBumpArray {
 	  x: 0.0
 	  y: 50.0
 	  size: 0.05
-	  direction: 0
+	  direction: 1
 	  type: Spare
 	}
 	MicroBump {
@@ -42,7 +42,7 @@ MicroBumpArray {
 	  x: 21.65
 	  y: 12.5
 	  size: 0.05
-	  direction: 0
+	  direction: 1
 	  type: Function
 	}
 	MicroBump {
@@ -53,7 +53,7 @@ MicroBumpArray {
 	  x: 21.65
 	  y: 37.5
 	  size: 0.05
-	  direction: 0
+	  direction: 1
 	  type: Function
 	}
 	MicroBump {
@@ -64,7 +64,7 @@ MicroBumpArray {
 	  x: 21.65
 	  y: 62.5
 	  size: 0.05
-	  direction: 0
+	  direction: 2
 	  type: VDD
 	}
 	MicroBump {
@@ -75,7 +75,7 @@ MicroBumpArray {
 	  x: 43.3
 	  y: 0.0
 	  size: 0.05
-	  direction: 0
+	  direction: 1
 	  type: Spare
 	}
 	MicroBump {
@@ -86,7 +86,7 @@ MicroBumpArray {
 	  x: 43.3
 	  y: 25.0
 	  size: 0.05
-	  direction: 0
+	  direction: 1
 	  type: Function
 	}
 	MicroBump {
@@ -97,7 +97,7 @@ MicroBumpArray {
 	  x: 43.3
 	  y: 50.0
 	  size: 0.05
-	  direction: 0
+	  direction: 1
 	  type: Function
 	}
 	MicroBump {
@@ -130,7 +130,7 @@ MicroBumpArray {
 	  x: 64.95
 	  y: 62.5
 	  size: 0.05
-	  direction: 0
+	  direction: 2
 	  type: VDD
 	}
 	MicroBump {
@@ -141,7 +141,7 @@ MicroBumpArray {
 	  x: 86.6
 	  y: 0
 	  size: 0.05
-	  direction: 0
+	  direction: 2
 	  type: VSS
 	}
 	MicroBump {
@@ -163,7 +163,7 @@ MicroBumpArray {
 	  x: 86.6
 	  y: 50
 	  size: 0.05
-	  direction: 0
+	  direction: 1
 	  type: Spare
 	}
 	MicroBump {
@@ -210,7 +210,7 @@ MicroBumpArray {
 	  x: 0.0
 	  y: 0.0
 	  size: 0.05
-	  direction: 0
+	  direction: 2
 	  type: VSS
 	}
 	MicroBump {
@@ -265,7 +265,7 @@ MicroBumpArray {
 	  x: 21.65
 	  y: 62.5
 	  size: 0.05
-	  direction: 0
+	  direction: 2
 	  type: VDD
 	}
 	MicroBump {
@@ -309,7 +309,7 @@ MicroBumpArray {
 	  x: 64.95
 	  y: 12.5
 	  size: 0.05
-	  direction: 0
+	  direction: 1
 	  type: Spare
 	}
 	MicroBump {
@@ -320,7 +320,7 @@ MicroBumpArray {
 	  x: 64.95
 	  y: 37.5
 	  size: 0.05
-	  direction: 0
+	  direction: 1
 	  type: Function
 	}
 	MicroBump {
@@ -331,7 +331,7 @@ MicroBumpArray {
 	  x: 64.95
 	  y: 62.5
 	  size: 0.05
-	  direction: 0
+	  direction: 2
 	  type: VDD
 	}
 	MicroBump {
@@ -342,7 +342,7 @@ MicroBumpArray {
 	  x: 86.6
 	  y: 0
 	  size: 0.05
-	  direction: 0
+	  direction: 2
 	  type: VSS
 	}
 	MicroBump {
@@ -353,7 +353,7 @@ MicroBumpArray {
 	  x: 86.6
 	  y: 25
 	  size: 0.05
-	  direction: 0
+	  direction: 1
 	  type: Function
 	}
 	MicroBump {
@@ -375,7 +375,7 @@ MicroBumpArray {
 	  x: 108.25
 	  y: 12.5
 	  size: 0.05
-	  direction: 0
+	  direction: 1
 	  type: Function
 	}
 	MicroBump {
@@ -386,7 +386,7 @@ MicroBumpArray {
 	  x: 108.25
 	  y: 37.5
 	  size: 0.05
-	  direction: 0
+	  direction: 1
 	  type: Function
 	}
 	MicroBump {
@@ -397,7 +397,7 @@ MicroBumpArray {
 	  x: 108.25
 	  y: 62.5
 	  size: 0.05
-	  direction: 0
+	  direction: 1
 	  type: Spare
 	}
 }
@@ -411,7 +411,7 @@ MicroBumpArray {
 	  x: 0.0
 	  y: 0.0
 	  size: 0.05
-	  direction: 0
+	  direction: 2
 	  type: VSS
 	}
 	MicroBump {
@@ -466,7 +466,7 @@ MicroBumpArray {
 	  x: 21.65
 	  y: 62.5
 	  size: 0.05
-	  direction: 0
+	  direction: 2
 	  type: VDD
 	}
 	MicroBump {
@@ -504,7 +504,7 @@ MicroBumpArray {
 	}
 	MicroBump {
 	  id: 10
-	  name: "txdataRD1"
+	  name: "rxdataRD2"
 	  row: 0
 	  col: 3
 	  x: 64.95
@@ -515,7 +515,7 @@ MicroBumpArray {
 	}
 	MicroBump {
 	  id: 11
-	  name: "txdata3"
+	  name: "rxdata4"
 	  row: 1
 	  col: 3
 	  x: 64.95
@@ -532,7 +532,7 @@ MicroBumpArray {
 	  x: 64.95
 	  y: 62.5
 	  size: 0.05
-	  direction: 0
+	  direction: 2
 	  type: VDD
 	}
 	MicroBump {
@@ -543,12 +543,12 @@ MicroBumpArray {
 	  x: 86.6
 	  y: 0
 	  size: 0.05
-	  direction: 0
+	  direction: 2
 	  type: VSS
 	}
 	MicroBump {
 	  id: 14
-	  name: "txdata2"
+	  name: "rxdata5"
 	  row: 1
 	  col: 4
 	  x: 86.6
@@ -570,7 +570,7 @@ MicroBumpArray {
 	}
 	MicroBump {
 	  id: 16
-	  name: "txdata1"
+	  name: "rxdata6"
 	  row: 0
 	  col: 5
 	  x: 108.25
@@ -581,7 +581,7 @@ MicroBumpArray {
 	}
 	MicroBump {
 	  id: 17
-	  name: "txdata0"
+	  name: "rxdata7"
 	  row: 1
 	  col: 5
 	  x: 108.25
@@ -592,13 +592,214 @@ MicroBumpArray {
 	}
 	MicroBump {
 	  id: 18
-	  name: "txdataRD0"
+	  name: "rxdataRD3"
 	  row: 2
 	  col: 5
 	  x: 108.25
 	  y: 62.5
 	  size: 0.05
 	  direction: 0
+	  type: Spare
+	}
+}
+MicroBumpArray {
+	MicroBumpCount: 18
+	MicroBump {
+	  id: 1
+	  name: "VSS"
+	  row: 0
+	  col: 0
+	  x: 0.0
+	  y: 0.0
+	  size: 0.05
+	  direction: 2
+	  type: VSS
+	}
+	MicroBump {
+	  id: 2
+	  name: "txdata0"
+	  row: 1
+	  col: 0
+	  x: 0.0
+	  y: 25.0
+	  size: 0.05
+	  direction: 1
+	  type: Function
+	}
+	MicroBump {
+	  id: 3
+	  name: "txdataRD0"
+	  row: 2
+	  col: 0
+	  x: 0.0
+	  y: 50.0
+	  size: 0.05
+	  direction: 1
+	  type: Spare
+	}
+	MicroBump {
+	  id: 4
+	  name: "txdata1"
+	  row: 0
+	  col: 1
+	  x: 21.65
+	  y: 12.5
+	  size: 0.05
+	  direction: 1
+	  type: Function
+	}
+	MicroBump {
+	  id: 5
+	  name: "txdata2"
+	  row: 1
+	  col: 1
+	  x: 21.65
+	  y: 37.5
+	  size: 0.05
+	  direction: 1
+	  type: Function
+	}
+	MicroBump {
+	  id: 6
+	  name: "VDD"
+	  row: 2
+	  col: 1
+	  x: 21.65
+	  y: 62.5
+	  size: 0.05
+	  direction: 2
+	  type: VDD
+	}
+	MicroBump {
+	  id: 7
+	  name: "txdataRD1"
+	  row: 0
+	  col: 2
+	  x: 43.3
+	  y: 0.0
+	  size: 0.05
+	  direction: 1
+	  type: Spare
+	}
+	MicroBump {
+	  id: 8
+	  name: "txdata3"
+	  row: 1
+	  col: 2
+	  x: 43.3
+	  y: 25.0
+	  size: 0.05
+	  direction: 1
+	  type: Function
+	}
+	MicroBump {
+	  id: 9
+	  name: "valid"
+	  row: 2
+	  col: 2
+	  x: 43.3
+	  y: 50.0
+	  size: 0.05
+	  direction: 1
+	  type: Function
+	}
+	MicroBump {
+	  id: 10
+	  name: "txdataRD2"
+	  row: 0
+	  col: 3
+	  x: 64.95
+	  y: 12.5
+	  size: 0.05
+	  direction: 1
+	  type: Spare
+	}
+	MicroBump {
+	  id: 11
+	  name: "txdata4"
+	  row: 1
+	  col: 3
+	  x: 64.95
+	  y: 37.5
+	  size: 0.05
+	  direction: 1
+	  type: Function
+	}
+	MicroBump {
+	  id: 12
+	  name: "VDD"
+	  row: 2
+	  col: 3
+	  x: 64.95
+	  y: 62.5
+	  size: 0.05
+	  direction: 2
+	  type: VDD
+	}
+	MicroBump {
+	  id: 13
+	  name: "VSS"
+	  row: 0
+	  col: 4
+	  x: 86.6
+	  y: 0
+	  size: 0.05
+	  direction: 2
+	  type: VSS
+	}
+	MicroBump {
+	  id: 14
+	  name: "txdata5"
+	  row: 1
+	  col: 4
+	  x: 86.6
+	  y: 25
+	  size: 0.05
+	  direction: 1
+	  type: Function
+	}
+	MicroBump {
+	  id: 15
+	  name: "validRD"
+	  row: 2
+	  col: 4
+	  x: 86.6
+	  y: 50
+	  size: 0.05
+	  direction: 1
+	  type: Spare
+	}
+	MicroBump {
+	  id: 16
+	  name: "txdata6"
+	  row: 0
+	  col: 5
+	  x: 108.25
+	  y: 12.5
+	  size: 0.05
+	  direction: 1
+	  type: Function
+	}
+	MicroBump {
+	  id: 17
+	  name: "txdata7"
+	  row: 1
+	  col: 5
+	  x: 108.25
+	  y: 37.5
+	  size: 0.05
+	  direction: 1
+	  type: Function
+	}
+	MicroBump {
+	  id: 18
+	  name: "txdataRD3"
+	  row: 2
+	  col: 5
+	  x: 108.25
+	  y: 62.5
+	  size: 0.05
+	  direction: 1
 	  type: Spare
 	}
 }

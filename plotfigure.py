@@ -131,7 +131,6 @@ class App(tk.Tk):
             mouse = MouseEvent(die, func=self.mouseclicks)
             self.mouseevent.append(mouse)
             # create FigureCanvasTkAgg object
-            #figure_canvas = FigureCanvasTkAgg(figure, self)
             figure_canvas = FigureCanvasTkAgg(figure, self.frm_figure)
             figure_canvas.mpl_connect('key_press_event', self.on_press)
             figure_canvas.mpl_connect('button_press_event', mouse.mouseclick_wrapper)
@@ -149,23 +148,15 @@ class App(tk.Tk):
             toolbar.update()
 
             figure_widget = figure_canvas.get_tk_widget()
-            #side = tk.LEFT
-            #figure_widget.pack(side=side, fill='both', expand=True)  # item6
             figure_widget.grid(row=int(i/2), column=i%2, sticky="nsew")
             self.figure_widget.append(figure_widget)
 
     def resize_window(self, event=None):
         self.adjust_window(event.width, event.height)
     def adjust_window(self, new_width, new_height):
-        #new_width = event.width
-        #new_height = event.height
-        #print(len(self.figure_widget))
         num = int( (len(self.figure_widget)+1) / 2 )
         for widget in self.figure_widget:
             widget.configure(width=new_width/2, height=new_height/num)
-        #for fig in self.figures:
-        #    fig.set_figwidth(new_width / 2)
-        #    fig.set_figheight(new_height/2)
 
 
     def app_clear(self):
@@ -180,19 +171,13 @@ class App(tk.Tk):
         top = tk.Tk()
         top.geometry("750x250")
         top.title("Child Window")
-        #frm_textbox = tk.Frame(top)
         textbox = tk.Text(top)
-        #textbox.grid(row=0, column=0, sticky="nsew")
         textbox.pack(side=tk.TOP, fill='both', expand=True)
 
         textbox.delete('1.0', tk.END)
         textbox.insert(tk.END, text)
 
     def new_mode_btn(self, func, text, argv=None):
-        #if not self.mode_frm:
-        #    self.mode_frm = tk.Frame(self, relief=tk.RAISED, bd=2)
-        #self.mode_frm.grid(row=1, column=2, sticky="ns")
-        #self.mode_frm.pack(side=tk.RIGHT, fill='both', expand=False)
         last_row = -1
         last_column = -1
         if self.mode_btn:
@@ -212,10 +197,6 @@ class App(tk.Tk):
         #self.mode_btn[-1].grid(row=last_row+1, column=0, sticky="ew", padx=5, pady=5)
         self.mode_btn[-1].grid(row=int((last_column+1)/6), column=(last_column+1)%6, sticky="ew", padx=5, pady=5)
         return self.mode_btn[-1]
-
-    def print_by_press(self, arg1=None, arg2=None):
-        while arg1:
-            print(arg1.pop())
 
     def remove_mode_btns(self):
         while self.mode_btn:
@@ -245,7 +226,6 @@ class App(tk.Tk):
                 array.construct_mmap()
                 array.construct_lmap()
             self.remove_mode_btns()
-            #return text
 
     def load_repairs(self, layouts, text):
         if layouts:
@@ -257,7 +237,6 @@ class App(tk.Tk):
                     array.clean_rmap_vEJ()
                     array.construct_rmap_vEJ()
             self.remove_mode_btns()
-            #return text
 
     def press_drawlines(self):
         self.cleanDrawingLines()
@@ -312,11 +291,6 @@ class App(tk.Tk):
             fig.set_dpi(self.dpi)
             fig.canvas.draw()
             fig.canvas.flush_events()
-        #width = self.frm_figure.winfo_width()
-        #height = self.frm_figure.winfo_height()
-        #self.frm_figure.config(width=width*(self.dpi/60), height=height*(self.dpi/60))
-        #for i, widget in enumerate(self.figure_widget):
-        #    widget.grid(row=int(i/2), column=i%2)
 
     def drawMicroBumps(self, target_array, drawbundles=True):
         if target_array.protomarray and target_array.ax:
@@ -414,7 +388,6 @@ class App(tk.Tk):
         for die in self.dies:
             for item in die.larray:
                 self.createDrawingLine(item, die.ax)
-            #print("Total number of drawing lines: ", len(larray))
 
     def cleanDrawingLines(self):
         for array in self.dies:
@@ -426,7 +399,6 @@ class App(tk.Tk):
     def createDrawingArrows(self, route, array=None, color='black'):
         if route not in array.drawn_routes:
             From, To = route
-            #rad = 0.27+len(self.drawnRepairGroup)*0.03
             rad = 0.33
             arpr = {"arrowstyle": "->", "connectionstyle": "arc3, rad="+str(rad), "color":str(color)}
             array.arrows.append(array.ax.annotate("", xy=(To.x, To.y), xytext=(From.x, From.y), arrowprops=arpr, zorder=11))
@@ -467,7 +439,6 @@ class App(tk.Tk):
                 ar.remove()
                 del ar
             array.drawn_routes.clear()
-            #array.drawnRepairGroup.clear()
         self.flush_fig()
 
     def on_press(self, event):
@@ -490,7 +461,6 @@ class App(tk.Tk):
             tc = ((event.xdata + array.ux / 2) // array.ux).astype(int)
             ax, ay = array.anchorVector
             mr, mc = array.ArraySize
-            yoffset = 0
             if ay < 0 and (tc % 2) == 0:
                 yoffset = array.uy / 2
             elif ay > 0 and (tc % 2) == 1:
@@ -512,9 +482,6 @@ class App(tk.Tk):
             self.new_mode_btn(self.mark_faulty, 'Mark Faulty', (array, bump))
 
     def mark_faulty(self, array, bump):
-        #if bump.contactgroup == False:
-        #    return
-
         bump.faulty = True
         if bump not in array.faulty_bump and array.ax:
             array.faultyText.append(array.ax.text(bump.x-4, bump.y, 'X', fontsize=10, zorder=11, color='red'))
@@ -531,8 +498,6 @@ class App(tk.Tk):
         self.flush_fig()
 
     def unmark_faulty(self, array, bump):
-        #if bump.contactgroup == False:
-        #    return
         if bump.faulty:
             bump.ClearField('faulty')
             if bump in array.faulty_bump:
@@ -541,7 +506,7 @@ class App(tk.Tk):
                 array.faultyText[index].remove()
                 del array.faultyText[index]
             else:
-                print("Error")
+                print("Error in function: unmark_faulty()")
                 return
             if bump.contactgroup:
                 for target_array in self.dies:
@@ -603,10 +568,7 @@ class App(tk.Tk):
                         #if bump.row == searched_bump.row and bump.col == searched_bump.col:
                         if bump.id == searched_bump.id:
                             if not searched_bump.contactgroup:
-                                #print("add mark: ", bump.contactgroup,", row-",searched_bump.row,", col-",searched_bump.col)
-                                #print("while bump is row-", bump.row, ", col-", bump.col)
                                 searched_bump.contactgroup = bump.contactgroup
-        #print(self.database)
         for array in self.dies:
             for bump in array.protomarray.MicroBump:
                 if bump.faulty:
@@ -622,6 +584,7 @@ class App(tk.Tk):
                 bump.ClearField('contactgroup')
         self.btn_unstack_dies.grid_remove()
         self.btn_stack_dies.grid(row=3, column=0, sticky="ew", padx=5, pady=5)
+
     def update_text(self, text):
         self.textbox.delete('1.0', tk.END)
         self.textbox.insert(tk.END, text)
