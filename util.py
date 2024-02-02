@@ -108,9 +108,16 @@ class IArray:
                         self.marray[i].append(None)
                     else:
                         self.marray[i].append(self.protomarray.MicroBump[indices[0]])
-            self.ux = abs(self.marray[0][1].x-self.marray[0][0].x)
-            self.uy = abs(self.marray[1][0].y-self.marray[0][0].y)
-            self.anchorVector = ((self.marray[0][1].x-self.marray[0][0].x), (self.marray[0][1].y-self.marray[0][0].y))
+            if len(self.marray[0]) > 1 and self.marray[0][0]:
+                self.ux = abs(self.marray[0][1].x-self.marray[0][0].x)
+            else:
+                self.ux = 21.65
+            if len(self.marray) > 1 and self.marray[0][0]:
+                self.uy = abs(self.marray[1][0].y-self.marray[0][0].y)
+            else:
+                self.uy = 12.5
+            #self.anchorVector = ((self.marray[0][1].x-self.marray[0][0].x), (self.marray[0][1].y-self.marray[0][0].y))
+            self.anchorVector = (self.ux, self.uy)
         else:
             raise Exception("Constructing mmap fail...")
 

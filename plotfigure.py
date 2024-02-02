@@ -49,9 +49,11 @@ class App(tk.Tk):
         self.figures = []
         self.figure_widget = []
 
+        self.display_texts = False
+
         self.geometry("720x360")
         self.title('3D Repair Simulator')
-        self.dpi = 80  #dpi=120
+        self.dpi = 120  #dpi=120
         self.scaler = 1.0
 
         self.frm_buttons = tk.Frame(self, relief=tk.RAISED, bd=2)
@@ -106,14 +108,17 @@ class App(tk.Tk):
         self.btn_clean_line = tk.Button(self.frm_buttons, text="Clean shorts", command=self.press_cleanlines)
         self.btn_show_signals = tk.Button(self.frm_buttons, text="Show signals", command=self.show_signals)
         self.btn_new_window = tk.Button(self.frm_buttons, text="Pop window", command=self.open_popup)
+        self.btn_clean_phy_text = tk.Button(self.frm_buttons, text="Display text", command=self.swtich_showing_texts)
+        self.btn_draw_bump_color = tk.Button(self.frm_buttons, text="Draw bump colors", command=self.draw_colors_on_circles_by_bundles)
         self.btn_load_repair.grid(row=1, column=0, sticky="ew", padx=5, pady=5)
         self.btn_load_mapping.grid(row=2, column=0, sticky="ew", padx=5, pady=5)
         self.btn_stack_dies.grid(row=3, column=0, sticky="ew", padx=5, pady=5)
         self.btn_line.grid(row=4, column=0, sticky="ew", padx=5, pady=5)
         self.btn_clean_line.grid(row=5, column=0, sticky="ew", padx=5, pady=5)
         self.btn_show_signals.grid(row=6, column=0, sticky="ew", padx=5, pady=5)
-        self.btn_new_window.grid(row=9, column=0, sticky="ew", padx=5, pady=5)
-
+        self.btn_new_window.grid(row=7, column=0, sticky="ew", padx=5, pady=5)
+        self.btn_clean_phy_text.grid(row=8, column=0, sticky="ew", padx=5, pady=5)
+        self.btn_draw_bump_color.grid(row=9, column=0, sticky="ew", padx=5, pady=5)
 
         for i in range(numDies):
             die = IArray()
@@ -135,13 +140,13 @@ class App(tk.Tk):
             figure_canvas.mpl_connect('key_press_event', self.on_press)
             figure_canvas.mpl_connect('button_press_event', mouse.mouseclick_wrapper)
 
-            # create axes for die
+            # create axes for map i
             die.ax = figure.add_subplot()
             x_left, x_right = die.ax.get_xlim()
             y_low, y_high = die.ax.get_ylim()
             die.ax.set_aspect(abs((x_right - x_left) / (y_low - y_high)) * 1)
 
-            # create the toolbar for die 1
+            # create the toolbar for map i
             frm_toolbar = tk.Frame(self.frm_toolbar)
             frm_toolbar.pack(side=tk.LEFT, fill='x', expand=False)
             toolbar = NavigationToolbar2Tk(figure_canvas, frm_toolbar)
@@ -158,6 +163,20 @@ class App(tk.Tk):
         for widget in self.figure_widget:
             widget.configure(width=new_width/2, height=new_height/num)
 
+    def swtich_showing_texts(self):
+        if self.display_texts:
+            self.display_texts = False
+        else:
+            self.display_texts = True
+
+        self.clean_phy_texts()
+        self.clean_all_SigText()
+        self.cleanBumps()
+        for array in self.dies:
+            self.drawMicroBumps(array, drawbundles=False)
+        if self.display_texts:
+            self.show_signals()
+        self.flush_fig()
 
     def app_clear(self):
         del self.database
@@ -280,7 +299,9 @@ class App(tk.Tk):
         with open(filepath, mode="r", encoding="utf-8") as input_file:
             text = text_format.Parse(input_file.read(), Repair_pb2.Arrays())
             self.load_repairs(layouts, text)
-            self.show_signals()
+            if self.display_texts:
+                self.show_signals()
+            self.flush_fig()
 
     def cleanDrawingCircles(self):
         for item in self.axes.patches:
@@ -306,7 +327,6 @@ class App(tk.Tk):
                 size = item.size
                 type = bumpType[int(item.type)]
                 linewidth = 1
-                linestyle = 'solid'
                 if type == 'Function':
                     edgecolor = 'black'
                     facecolor = colorBoard[item.bundle%15 if drawbundles else -1]
@@ -320,7 +340,7 @@ class App(tk.Tk):
                     facecolor = 'white'
                     textPlus.append(xy)
                 elif type == 'Vss':
-                    edgecolor = 'black'
+                    edgecolor = 'gray'
                     facecolor = 'white'
                     textMinus.append(xy)
                 else:
@@ -332,27 +352,32 @@ class App(tk.Tk):
                     linestyle = 'solid'
                 elif item.direction == 2:
                     linestyle = 'solid'
+                else:
+                    linestyle = 'solid'
                 ax.add_patch(plt.Circle(xy=xy, radius=size*self.scaler*180.0,
                                              edgecolor=edgecolor, facecolor=facecolor,
                                              linewidth=linewidth, zorder=10, linestyle=linestyle))
-                target_array.phybumpText.append( ax.text(item.x-6, item.y+4, item.name, fontsize=10, zorder=11) )
+                if self.display_texts:
+                    target_array.phybumpText.append( ax.text(item.x-6, item.y+4, item.name, fontsize=10, zorder=11) )
                 x.append(float(item.x))
                 y.append(float(item.y))
 
                 # Mark faulty bumps
                 if item.faulty:
                     target_array.faultyText.append(
-                        target_array.ax.text(item.x - 4, item.y, 'X', fontsize=10, zorder=11, color='red'))
+                        target_array.ax.text(item.x - 4, item.y - 4, 'X', fontsize=10, zorder=11, color='red'))
                     target_array.faulty_bump.append(item)
 
             ax.scatter(x, y, s=0, marker='o')
-            for item in textPlus:
-                tx, ty = item
-                target_array.phybumpText.append( ax.text(tx - 5, ty, '+', fontsize=8, zorder=11) )
-            for item in textMinus:
-                tx, ty = item
-                target_array.phybumpText.append( ax.text(tx - 3, ty - 1, '-', fontsize=10, zorder=11) )
-
+            #if self.display_texts:
+            #    for item in textPlus:
+            #        tx, ty = item
+            #        target_array.phybumpText.append( ax.text(tx - 5, ty, '+', fontsize=8, zorder=11) )
+            #        #ax.text(tx - 5, ty, '+', fontsize=8, zorder=11)
+            #    for item in textMinus:
+            #        tx, ty = item
+            #        target_array.phybumpText.append( ax.text(tx - 3, ty - 1, '-', fontsize=10, zorder=11) )
+            #        #ax.text(tx - 3, ty - 1, '-', fontsize=10, zorder=11)
         self.flush_fig()
 
     def show_signals(self):
@@ -368,12 +393,25 @@ class App(tk.Tk):
         for array in self.dies:
             while array.sigText:
                 array.sigText.pop().remove()
-        self.flush_fig()
+        #self.flush_fig()
+
+    def clean_phy_texts(self):
+        for array in self.dies:
+            while array.phybumpText:
+                array.phybumpText.pop().remove()
+        #self.flush_fig()
 
     def cleanBumps(self):
-        for item in self.axes.patches:
-            item.remove()
-            del item
+        for array in self.dies:
+            for item in array.ax.patches:
+                item.remove()
+                del item
+
+    def draw_colors_on_circles_by_bundles(self):
+        self.cleanBumps()
+        for array in self.dies:
+            self.drawMicroBumps(array, drawbundles=True)
+        self.flush_fig()
 
     def createDrawingLine(self, line, ax):
         if ax:
@@ -445,7 +483,7 @@ class App(tk.Tk):
         print('press', event.key)
         if event.key == 'd':
             self.press_cleanlines()
-            self.press_cleanarrows()
+            #self.press_cleanarrows()
             self.clean_all_SigText()
         elif event.key == 'a':
             self.press_drawlines()
@@ -484,7 +522,7 @@ class App(tk.Tk):
     def mark_faulty(self, array, bump):
         bump.faulty = True
         if bump not in array.faulty_bump and array.ax:
-            array.faultyText.append(array.ax.text(bump.x-4, bump.y, 'X', fontsize=10, zorder=11, color='red'))
+            array.faultyText.append(array.ax.text(bump.x-4, bump.y-4, 'X', fontsize=10, zorder=11, color='red'))
             array.faulty_bump.append(bump)
         if bump.contactgroup:
             for target_array in self.dies:

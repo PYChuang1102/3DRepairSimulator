@@ -1,0 +1,55 @@
+syntax = "proto3";
+option go_package = "protobuf/import;proto";
+package import;
+import "Repair.vEJ.proto";
+
+enum BumpTypes {
+	VSS											=0;
+	VDD											=1;
+	Function									=2;
+	Spare										=3;
+}
+
+enum IODirection {
+	Input										=0;
+	Output										=1;
+	Bidirectional								=2;
+}
+
+message Fnsignals {
+	string name									=1;
+	message cntrls {
+		string mux								=1;
+		uint32 sel								=2;
+	}
+	repeated cntrls mode						=2;
+}
+
+message MicroBumps {
+	uint32 id									=1;
+	string name									=2;
+	int32 row									=3;
+	int32 col									=4;
+	optional float x							=5;
+	optional float y							=6;
+	optional float size							=7;
+	optional uint32 bundle						=8;
+	optional uint32 phybundle					=9;
+	optional uint32 color						=10;
+	BumpTypes type								=11;
+	IODirection direction						=12;
+	repeated Fnsignals current					=13;
+	repeated Fnsignals repair	 				=14;
+	repeated Signals signal						=15;
+	optional bool faulty						=16;
+	optional uint32 contactgroup				=17;
+}
+
+message MicroBumpArrays {
+	int32 MicroBumpCount						=1;
+	repeated MicroBumps MicroBump				=2;
+}
+
+message Layouts {
+	repeated MicroBumpArrays MicroBumpArray		=1;
+}

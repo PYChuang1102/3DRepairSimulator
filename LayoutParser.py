@@ -36,19 +36,19 @@ channels = {
 }
 
 IODir = {
-    0:0,
-    1:0,
-    2:-1,
-    3:-1,
-    4:-1,
-    5:-1,
-    6:-1,
-    7:-1,
-    8:-1,
-    9:-1,
-    10:-1,
-    11:-1,
-    12:-1,
+    0:2,
+    1:2,
+    2:0,
+    3:0,
+    4:0,
+    5:0,
+    6:0,
+    7:0,
+    8:0,
+    9:0,
+    10:0,
+    11:0,
+    12:0,
     13:1,
     14:1,
     15:1,
@@ -62,6 +62,35 @@ IODir = {
     23:1,
     24:1,
     25:1,
+}
+
+IODir_inversed = {
+    0:2,
+    1:2,
+    2:1,
+    3:1,
+    4:1,
+    5:1,
+    6:1,
+    7:1,
+    8:1,
+    9:1,
+    10:1,
+    11:1,
+    12:1,
+    13:0,
+    14:0,
+    15:0,
+    16:0,
+    17:0,
+    18:0,
+    19:0,
+    20:0,
+    21:0,
+    22:0,
+    23:0,
+    24:0,
+    25:0,
 }
 
 bundles = {
@@ -166,9 +195,8 @@ class layoutParser:
                         itemlist.append(round((int(col)*self.xpitch), 2))
                         itemlist.append(round((int(row/2)*self.ypitch+(self.ypitch/2 if int(col)%2 != 0 else 0)), 2))
                         itemlist.append(0.05)
-                        itemlist.append(mybundle)
-                        itemlist.append(mybundle)
                         itemlist.append(mytype)
+                        itemlist.append(IODir_inversed[idx])
                         self.array.append(itemlist)
                         self.name.append(str(item))
                         del(itemlist)
@@ -194,23 +222,25 @@ class layoutParser:
 
     def write_layout(self, filename):
         with open(filename, "w") as f:
+            dies = MicroBumpLayout_pb2.Layouts()
             array = MicroBumpLayout_pb2.MicroBumpArrays()
             array.MicroBumpCount = len(self.array)
             for idx, element in enumerate(self.array):
                 microBump = MicroBumpLayout_pb2.MicroBumps()
                 microBump.name = str(self.name[idx])
+                microBump.id = idx
                 microBump.row = int(element[0])
                 microBump.col = int(element[1])
                 microBump.x = float(element[2])
                 microBump.y = float(element[3])
                 microBump.size = float(element[4])
-                microBump.bundle = int(element[5])
-                microBump.color = int(element[6])
-                #microBump.bundleIndex = int(element[5])
-                microBump.type = int(element[7])
+                microBump.type = int(element[5])
+                microBump.direction = int(element[6])
                 array.MicroBump.append(microBump)
                 del(microBump)
-            text_array = text_format.MessageToString(array)
+            #print(dies)
+            dies.MicroBumpArray.append(array)
+            text_array = text_format.MessageToString(dies)
             #print(text_array)
             f.write(text_array)
         return None
@@ -253,232 +283,16 @@ class layoutParser:
     def write_repair(self, filename):
         with open(filename, "w") as f:
             array = Repair_pb2.Arrays()
-            array.BundleCount = 1
-            for b in range(array.BundleCount):
-                for i in range(14):
-                    signals = []
-                    spares = []
-                    for idx, item in enumerate(self.array):
-                        #print("i: " + str(i) + ", name: " + str(self.name[idx]) + ", item: ", item)
-                        if item[5] == i and item[7] == 2:
-                            signals.append((self.name[idx], item))
-                        elif item[5] == i and item[7] == 3:
-                            spares.append((self.name[idx], item))
-                    reorderedSignals = []
-                    if len(signals) != 0:
-                        reorderedSignals = self.reorderlistbyname(signals)
-                    reorderedSpares = []
-                    if len(spares) != 0:
-                        reorderedSpares = self.reorderlistbyname(spares)
-                    if len(signals) != len(reorderedSignals) or len(spares) != len(reorderedSpares):
-                        raise Exception("Ordering list fail.")
-                    phylanes = reorderedSignals + reorderedSpares
+            dft = Repair_pb2.RepairDFTs()
+            group = Repair_pb2.Groups()
 
-                    if len(phylanes) != 0:
-                        iodir = []
-                        for item in phylanes:
-                            name, _, _ = self.parsenumber(item[0])
-                            iodir.append(IODir[channels[name]])
+            # TX groups
+            #for idx, element in enumerate(self.array):
 
-                        bundle = Repair_pb2.Bundles()
-                        bundle.FnInterconnectCount = len(reorderedSignals)
-                        bundle.PhyInterconnectCount = len(phylanes)
 
-                        fnconnection = Repair_pb2.Connections()
-                        for j in range(bundle.FnInterconnectCount):
-                            name, item = reorderedSignals[j]
-                            #fnconnection._signal_ = name
-                            #if iodir[j] > 0:
-                            #    fnconnection._to_ = name
-                            #elif iodir[j] < 0:
-                            #    fnconnection._from_ = name
-                            fnconnection._from_ = name
-                            fnconnection._to_ = name
-                            bundle.FnInterconnect.append(fnconnection)
-                        del (fnconnection)
-
-                        for j in range(bundle.PhyInterconnectCount):
-                            name, item = phylanes[j]
-                            signalName, isSpare, busNo = self.parsenumber(name)
-                            channel = channels[signalName]
-                            bundleNo = bundles[channels[signalName]]
-
-                            phyconnection = Repair_pb2.PhyConnections()
-                            if bundleNo == 2 or bundleNo == 7:
-                                numberModes = 2
-                            else:
-                                numberModes = len(reorderedSpares)+1
-
-                            phyconnection.Default._signal_ = name
-
-                            if iodir[j] > 0:
-                                phyconnection.Default._to_ = name
-                            elif iodir[j] < 0:
-                                phyconnection.Default._from_ = name
-
-                            if channel == 4 or channel == 16:
-                                bundle.PhyInterconnect.append(phyconnection)
-                                del(phyconnection)
-                                continue
-
-                            for m in range(int(math.ceil(math.log2(numberModes)))):
-                                control = Repair_pb2.Controls()
-                                control._name_ = "Mux bit " + str(m)
-                                control._bit_ = str(int(bool(0 & (2 ** m))))
-                                phyconnection.Default._control_.append(control)
-                                del (control)
-
-                            if bundleNo == 2 or bundleNo == 7:
-                                if channel == 2:
-                                    phyconnection.RepairCount = 1
-                                    repairConnection = Repair_pb2.Connections()
-                                    repairConnection._signal_ = name
-                                    for item in phylanes:
-                                        if channels[item[0]] == 3:
-                                            myname = item[0]
-                                    repairConnection._from_ = myname
-                                    for m in range(1):
-                                        control = Repair_pb2.Controls()
-                                        control._name_ = "Mux bit " + str(m)
-                                        control._bit_ = str(int(bool((1) & (2 ** m))))
-                                        repairConnection._control_.append(control)
-                                        del (control)
-                                    phyconnection.Repair.append(repairConnection)
-                                elif channel == 3:
-                                    phyconnection.RepairCount = 1
-                                    repairConnection = Repair_pb2.Connections()
-                                    repairConnection._signal_ = name
-                                    for item in phylanes:
-                                        if channels[item[0]] == 4:
-                                            myname = item[0]
-                                    repairConnection._from_ = myname
-                                    for m in range(1):
-                                        control = Repair_pb2.Controls()
-                                        control._name_ = "Mux bit " + str(m)
-                                        control._bit_ = str(int(bool((1) & (2 ** m))))
-                                        repairConnection._control_.append(control)
-                                        del (control)
-                                    phyconnection.Repair.append(repairConnection)
-                                    del (repairConnection)
-                                elif channel == 5:
-                                    phyconnection.RepairCount = 1
-                                    repairConnection = Repair_pb2.Connections()
-                                    repairConnection._signal_ = name
-                                    for item in phylanes:
-                                        if channels[item[0]] == 4:
-                                            myname = item[0]
-                                    repairConnection._from_ = myname
-                                    for m in range(1):
-                                        control = Repair_pb2.Controls()
-                                        control._name_ = "Mux bit " + str(m)
-                                        control._bit_ = str(int(bool((1) & (2 ** m))))
-                                        repairConnection._control_.append(control)
-                                        del (control)
-                                    phyconnection.Repair.append(repairConnection)
-                                    del (repairConnection)
-                                elif channel == 14:
-                                    phyconnection.RepairCount = 1
-                                    repairConnection = Repair_pb2.Connections()
-                                    repairConnection._signal_ = name
-                                    for item in phylanes:
-                                        if channels[item[0]] == 15:
-                                            myname = item[0]
-                                    repairConnection._to_ = myname
-                                    for m in range(1):
-                                        control = Repair_pb2.Controls()
-                                        control._name_ = "Mux bit " + str(m)
-                                        control._bit_ = str(int(bool((1) & (2 ** m))))
-                                        repairConnection._control_.append(control)
-                                        del (control)
-                                    phyconnection.Repair.append(repairConnection)
-                                    del (repairConnection)
-                                elif channel == 15:
-                                    phyconnection.RepairCount = 1
-                                    repairConnection = Repair_pb2.Connections()
-                                    repairConnection._signal_ = name
-                                    for item in phylanes:
-                                        if channels[item[0]] == 16:
-                                            myname = item[0]
-                                    repairConnection._to_ = myname
-                                    for m in range(1):
-                                        control = Repair_pb2.Controls()
-                                        control._name_ = "Mux bit " + str(m)
-                                        control._bit_ = str(int(bool((1) & (2 ** m))))
-                                        repairConnection._control_.append(control)
-                                        del (control)
-                                    phyconnection.Repair.append(repairConnection)
-                                    del (repairConnection)
-                                elif channel == 17:
-                                    phyconnection.RepairCount = 1
-                                    repairConnection = Repair_pb2.Connections()
-                                    repairConnection._signal_ = name
-                                    for item in phylanes:
-                                        if channels[item[0]] == 16:
-                                            myname = item[0]
-                                    repairConnection._to_ = myname
-                                    for m in range(1):
-                                        control = Repair_pb2.Controls()
-                                        control._name_ = "Mux bit " + str(m)
-                                        control._bit_ = str(int(bool((1) & (2 ** m))))
-                                        repairConnection._control_.append(control)
-                                        del (control)
-                                    phyconnection.Repair.append(repairConnection)
-                                    del (repairConnection)
-                            else:
-                                phyconnection.RepairCount = len(reorderedSpares)
-                                for k in range(phyconnection.RepairCount):
-                                    repairConnection = Repair_pb2.Connections()
-                                    if isSpare == 0:
-                                        repairConnection._signal_ = name
-                                        if busNo >= 0:
-                                            if busNo == 0 and k == 0:
-                                                repairConnection._from_, _ = reorderedSpares[0]
-                                            elif busNo == 31 and k == 1:
-                                                repairConnection._from_, _ = reorderedSpares[1]
-                                            elif busNo == 32 and k == 0:
-                                                repairConnection._from_, _ = reorderedSpares[0]
-                                            elif busNo == 63 and k == 1:
-                                                repairConnection._from_, _ = reorderedSpares[1]
-                                            else:
-                                                repairConnection._from_ = signalName + str(busNo + k * 2 - 1)
-                                        else:
-                                            spareName, _ = reorderedSpares[0]
-                                            repairConnection._from_ = spareName #need to change to spares
-                                    else:
-                                        repairConnection._signal_ = name
-                                        if busNo >= 0:
-                                            if busNo == 0 and k == 0:
-                                                repairConnection._from_, _ = reorderedSignals[0]
-                                            elif busNo == 1 and k == 1:
-                                                repairConnection._from_, _ = reorderedSignals[-1]
-                                            elif busNo == 2 and k == 0:
-                                                repairConnection._from_, _ = reorderedSignals[0]
-                                            elif busNo == 3 and k == 1:
-                                                repairConnection._from_, _ = reorderedSignals[-1]
-                                            else:
-                                                repairConnection._from_ = "Error!"
-                                                phyconnection.RepairCount = phyconnection.RepairCount -1
-                                                del (repairConnection)
-                                                continue
-                                        else:
-                                            FnName, _ = reorderedSignals[0]
-                                            repairConnection._from_ = FnName
-
-                                    for m in range( int(math.ceil(math.log2(numberModes))) ):
-                                        control = Repair_pb2.Controls()
-                                        control._name_ = "Mux bit " + str(m)
-                                        control._bit_ = str(int(bool((k+1) & (2 ** m))))
-                                        repairConnection._control_.append(control)
-                                        del (control)
-                                    phyconnection.Repair.append(repairConnection)
-                                    del(repairConnection)
-
-                            bundle.PhyInterconnect.append(phyconnection)
-                        array.Bundle.append(bundle)
-                        del(bundle)
-            text_array = text_format.MessageToString(array)
-            #print(array)
-            f.write(text_array)
+            dft.Repairgroup.append(group)
+            array.Array.append(dft)
+            print(array)
         return None
 
 if __name__ == "__main__":
@@ -499,10 +313,10 @@ if __name__ == "__main__":
     #with open(filename, "r") as f:
     #    myarray = text_format.Parse(f.read(), Repair_pb2.Arrays())
     #print(myarray)
-    filename = ".\\data\\UCIe.layout"
-    with open(filename, "r") as f:
-        mbarray = text_format.Parse(f.read(), MicroBumpLayout_pb2.MicroBumpArrays())
-    print(mbarray.MicroBump[-1].type)
+    #filename = ".\\data\\UCIe.layout"
+    #with open(filename, "r") as f:
+    #    mbarray = text_format.Parse(f.read(), MicroBumpLayout_pb2.Layouts())
+    #print(mbarray)
 
     #repairfilename = "\\repair.txt"
     #parser.write_repair(dir + repairfilename)

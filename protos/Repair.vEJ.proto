@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+enum Values {
+	mX											=0;
+	m1											=1;
+	m2											=2;
+	m3											=3;
+	m4											=4;
+}
+
+message Path {
+	string TX									=1;
+	repeated string RX							=2;
+}
+
+message FnInterconnects {
+	uint32 FnInterconnectCount					=1;
+	repeated Path FnInterconnect				=2;
+}
+	
+message PhyInterconnects {
+	uint32 PhyInterconnectCount					=1;
+	repeated Path PhyInterconnect				=2;
+}
+
+message Controls {
+	string adapter								=1;
+	Values Sel									=2;
+}
+
+message Repairs {
+	optional string To							=1;
+	optional string From						=2;
+	repeated Controls control 					=3;
+}
+
+message Signals {
+	string port									=1;
+	Repairs default								=2;
+	repeated Repairs repair						=3;
+}
+
+message RepairLogic {
+	uint32 FnSignalCount						=1;
+	uint32 PhySignalCount						=2;
+	repeated Signals signal						=3;
+}
+
+message Bundles {
+	repeated FnInterconnects FnInterconnects	=1;
+	repeated PhyInterconnects PhyInterconnects	=2;
+}
+
+message Groups {
+	repeated RepairLogic TXRepairLogic  		=1;
+	repeated RepairLogic RXRepairLogic			=2;
+}
+
+message RepairDFTs {
+	repeated Groups Repairgroup					=1;
+}
+
+message Arrays {
+	repeated RepairDFTs Array					=1;
+}
